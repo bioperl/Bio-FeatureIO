@@ -2,7 +2,7 @@ Bio-FeatureIO version 0.01
 ==========================
 
 Bio::FeatureIO is a BioPerl-based parser for feature data from common biological
-sequence formats, such as GFF3, GTF, and BED.
+sequence formats, such as GFF3, GTF, and BED. 
 
 INSTALLATION
 
@@ -17,8 +17,8 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-  URI::Escape
-  XML::DOM::XPath
+  URI::Escape - for Bio::FeatureIO::gff
+  XML::DOM::XPath - for Bio::FeatureIO::interpro
 
 COPYRIGHT AND LICENCE
 
