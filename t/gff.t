@@ -128,6 +128,10 @@ while($f = $io->next_feature()){
         is($f->end, 62469236);
         is($f->strand, -1);
     }
+
+#then read features
+while($f = $io->next_feature()){
+  $fcount++;
 }
 is($fcount , 6);
 
@@ -144,7 +148,6 @@ is($scount , 1);
 #
 # use FeatureIO::gff to read a GFF3 file w/ non-directivized FASTA tail
 #
-
 $fcount = 0;
 $scount = 0;
 

@@ -260,10 +260,11 @@ methods. Internal methods are usually preceded with a _
 package Bio::FeatureIO;
 
 use strict;
+use warnings;
 
 use Symbol;
 
-use base qw(Bio::Root::Root Bio::Root::IO);
+use base qw(Bio::Root::IO);
 
 =head2 new
 
@@ -281,37 +282,37 @@ use base qw(Bio::Root::Root Bio::Root::IO);
 my $entry = 0;
 
 sub new {
-  my ($caller,@args) = @_;
-  my $class = ref($caller) || $caller;
-
-  # or do we want to call SUPER on an object if $caller is an
-  # object?
-  if( $class =~ /Bio::FeatureIO::(\S+)/ ) {
-
-    my ($self) = $class->SUPER::new(@args);	
-    $self->_initialize(@args);
-    return $self;
-
-  } else {
-
-	my %param = @args;
-
-	@param{ map { lc $_ } keys %param } = values %param; # lowercase keys
-	my $format = $param{'-format'} ||
-      $class->_guess_format( $param{-file} || $ARGV[0] );
-	
-	if( ! $format ) {
-      if ($param{-file}) {
-        $format = $class->_guess_format($param{-file});
-      } elsif ($param{-fh}) {
-        $format = $class->_guess_format(undef);
+    my ($caller,@args) = @_;
+    my $class = ref($caller) || $caller;
+  
+    # or do we want to call SUPER on an object if $caller is an
+    # object?
+    if( $class =~ /Bio::FeatureIO::(\S+)/ ) {
+  
+      my ($self) = $class->SUPER::new(@args);	
+      $self->_initialize(@args);
+      return $self;
+  
+    } else {
+  
+      my %param = @args;
+  
+      @param{ map { lc $_ } keys %param } = values %param; # lowercase keys
+      my $format = $param{'-format'} ||
+        $class->_guess_format( $param{-file} || $ARGV[0] );
+      
+      if( ! $format ) {
+        if ($param{-file}) {
+          $format = $class->_guess_format($param{-file});
+        } elsif ($param{-fh}) {
+          $format = $class->_guess_format(undef);
+        }
       }
-	}
-	$format = "\L$format";	# normalize capitalization to lower case
-	return unless( $class->_load_format_module($format) );
-	return "Bio::FeatureIO::$format"->new(@args);
-
-  }
+      $format = "\L$format";	# normalize capitalization to lower case
+      return unless( $class->_load_format_module($format) );
+      return "Bio::FeatureIO::$format"->new(@args);
+  
+    }
 }
 
 =head2 newFh
@@ -330,9 +331,9 @@ See L<Bio::FeatureIO::Fh>
 =cut
 
 sub newFh {
-  my $class = shift;
-  return unless my $self = $class->new(@_);
-  return $self->fh;
+    my $class = shift;
+    return unless my $self = $class->new(@_);
+    return $self->fh;
 }
 
 =head2 fh
