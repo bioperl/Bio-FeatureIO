@@ -78,7 +78,6 @@ use strict;
 use base qw(Bio::FeatureIO);
 use Bio::SeqFeature::Annotated;
 use Bio::Annotation::SimpleValue;
-use Bio::OntologyIO;
 use Scalar::Util qw(looks_like_number);
 
 =head2 _initialize
