@@ -16,7 +16,7 @@
 
 =head1 NAME
 
-Bio::FeatureIO - Handler for FeatureIO
+Bio::FeatureIO - BioPerl IO classes for creating a stream of sequence features
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,11 @@ Bio::FeatureIO - Handler for FeatureIO
 
 =head1 DESCRIPTION
 
-An I/O iterator subsystem for genomic sequence features.
+An I/O iterator subsystem for genomic sequence features.  This set of parsers
+can be used on many levels:
+
+1) Simple parsing: the next_dataset() method returns hash-refs containing
+both the data parsed and 
 
 Bio::FeatureIO is a handler module for the formats in the FeatureIO set (eg,
 Bio::FeatureIO::GFF). It is the officially sanctioned way of getting at the
@@ -264,7 +268,7 @@ use warnings;
 
 use Symbol;
 
-use base qw(Bio::Root::IO);
+use base qw(Bio::Root::IO Bio::Event::SimpleEventGeneratorI);
 
 =head2 new
 
@@ -391,7 +395,7 @@ sub _initialize {
  Returns : a Bio::SeqFeatureI feature object
  Args    : none
 
-See L<Bio::Root::RootI>, L<Bio::SeqFeatureI>
+See L<Bio::Root::RootI>, L<Bio::SeqFeatureI>.
 
 =cut
 
@@ -413,6 +417,24 @@ sub next_feature {
 sub write_feature {
     my ($self, $seq) = @_;
     $self->throw_not_implemented();
+}
+
+=head2 seq
+
+ Title   : seq
+ Usage   : $obj->seq() OR $obj->seq($newSeq)
+ Example :
+ Returns : Bio::SeqI object
+ Args    : newSeq (optional)
+
+=cut
+
+sub seq {
+  my $self = shift;
+  my $val = shift;
+
+  $self->{'seq'} = $val if defined($val);
+  return $self->{'seq'};
 }
 
 =head2 _load_format_module
@@ -445,41 +467,6 @@ END
   ;
   }
   return $ok;
-}
-
-=head2 seq
-
- Title   : seq
- Usage   : $obj->seq() OR $obj->seq($newSeq)
- Example :
- Returns : Bio::SeqI object
- Args    : newSeq (optional)
-
-=cut
-
-sub seq {
-  my $self = shift;
-  my $val = shift;
-
-  $self->{'seq'} = $val if defined($val);
-  return $self->{'seq'};
-}
-
-=head2 _filehandle
-
- Title   : _filehandle
- Usage   : $obj->_filehandle($newval)
- Function: This method is deprecated. Call _fh() instead.
- Example :
- Returns : value of _filehandle
- Args    : newvalue (optional)
-
-
-=cut
-
-sub _filehandle {
-    my ($self,@args) = @_;
-    return $self->_fh(@args);
 }
 
 =head2 _guess_format

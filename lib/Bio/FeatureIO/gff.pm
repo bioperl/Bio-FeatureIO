@@ -2,7 +2,8 @@ package Bio::FeatureIO::gff;
 
 use base qw(Bio::FeatureIO);
 
-use Modern::Perl;
+use strict;
+use warnings;
 use URI::Escape;
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 use Scalar::Util qw(blessed);
@@ -21,8 +22,15 @@ sub _initialize {
   
     $self->SUPER::_initialize(@args);
     
-    my ($handler) = $self->_rearrange([qw(HANDLER)] , @args);
-    $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(-verbose => $self->verbose);
+    my ($handler, $handler_args, $format) =
+        $self->_rearrange([qw(HANDLER HANDLER_ARGS FORMAT)] , @args);
+    $format ||= 'GFF3';
+    $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(-verbose => $self->verbose,
+                                                                     -fh      => $self->_fh);
+    if (!ref($handler) || !$handler->isa('Bio::HandlerBaseI')) {
+        $self->throw('Passed object must be a Bio::HandlerBaseI');
+    }
+    $handler->format($format);
     $self->_init_stream();
     $self->handler($handler);
 }
@@ -30,11 +38,17 @@ sub _initialize {
 # raw feature stream; returned features are as-is, may be modified post-return
 sub next_feature {
     my $self = shift;
+    return if $self->fasta_mode;
     DATASET:
     while (my $ds = $self->next_dataset) {
         # leave it to the handler to decide when a feature is returned
-        while (my $sf = $self->handler->data_handler($ds)) {
-            return $sf;
+        while (my $object = $self->handler->data_handler($ds)) {
+            return $object if $object->isa('Bio::SeqFeature::Generic');
+            if ($object->isa('Bio::SeqIO')) {
+                $self->{seen_seq}++;
+                $self->seqio($object);
+                return;
+            }
         }
     }
 }
@@ -62,44 +76,41 @@ sub next_dataset {
     GFFLINE:
     while (my $line = $self->_readline) {
         $len += CORE::length($line);
-        given ($line) {
-            when (/^\s*$/) { next GFFLINE }  # blank lines
-            when (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) {  # comments and directives
-                if (length($1) == 1) {
-                    chomp $line;
-                    @{$dataset}{qw(MODE DATA)} = ('comment', {DATA => $line});
-                } else {
-                    $self->{mode} = 'directive';
-                    @{$dataset}{qw(MODE DATA)} = ('directive', $self->directive($2, $3));
-                }
+        if ($line =~ /^\s*$/) {
+            next GFFLINE # blank lines
+        }
+        elsif ($line =~ /^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) {  # comments and directives
+            if (length($1) == 1) {
+                chomp $line;
+                @{$dataset}{qw(MODE DATA)} = ('comment', {DATA => $line});
+            } else {
+                $self->{mode} = 'directive';
+                @{$dataset}{qw(MODE DATA)} = ('directive', $self->directive($2, $3));
             }
-            when (/^>/) {          # sequence
+        } elsif ($line =~ /^>/) {          # sequence
                 chomp $line;
                 @{$dataset}{qw(MODE DATA)} = ('sequence', {'sequence-header' =>  $line});
                 $self->{mode} = 'sequence';
-            }
-            when (/(?:\t[^\t]+){8}/)  {
+        } elsif ($line =~ /(?:\t[^\t]+){8}/)  {
+            chomp $line;
+            $self->{mode} = $dataset->{MODE} = 'feature';
+            my %feat;
+            @feat{qw(region source type start end score strand phase attributes)}
+                = split("\t",$line,9);
+            $dataset->{DATA} = \%feat;
+        } else {
+            if ($self->{mode} eq 'sequence') {
                 chomp $line;
-                $self->{mode} = $dataset->{MODE} = 'feature';
-                my %feat;
-                @feat{qw(region source type start end score strand phase attributes)}
-                    = split("\t",$line,9);
-                $dataset->{DATA} = \%feat;
-            }
-            default {
-                if ($self->{mode} eq 'sequence') {
-                    chomp $line;
-                    @{$dataset}{qw(MODE DATA)} = ('sequence', {sequence => $line});
-                } else {
-                    # anything else should be sequence, but there should be some
-                    # kind of directive to change the mode or a typical FASTA header
-                    # should be found, if not, die
-                    $self->throw("Unknown line: $line, parser was in mode ".$self->{mode});
-                }
+                @{$dataset}{qw(MODE DATA)} = ('sequence', {sequence => $line});
+            } else {
+                # anything else should be sequence, but there should be some
+                # kind of directive to change the mode or a typical FASTA header
+                # should be found, if not, die
+                $self->throw("Unknown line: $line, parser was in mode ".$self->{mode});
             }
         }
         if ($dataset) {
-            @$dataset{qw(START LEN)} = ($self->{stream_start}, $len);
+            @$dataset{qw(START LENGTH)} = ($self->{stream_start}, $len);
             $self->{stream_start} += $len;
             return $dataset;
         }
@@ -112,23 +123,16 @@ sub directive {
     $rest ||= '';
     my %data;
     
-    # convert for the pre 5.10 crowd to a lookup table
-    given ($directive) {
-        when ('sequence-region') {
-            @data{qw(type id start end)} = ('sequence', split(/\s+/, $rest));
-        }
-        when ('genome-build') {
-            @data{qw(type source buildname)} = ($directive, split(/\s+/, $rest));
-        }
-        when ('#') {
-            $data{type} = 'resolve_references';
-        }
-        when ('FASTA') {
-            $data{type} = 'sequence';
-        }
-        default {
-            @data{qw(type data)} = ($directive, $rest);
-        }
+    if ($directive eq 'sequence-region') {
+        @data{qw(type id start end)} = ('sequence-region', split(/\s+/, $rest));
+    } elsif ($directive eq 'genome-build') {
+        @data{qw(type source buildname)} = ($directive, split(/\s+/, $rest));
+    } elsif ($directive eq '#') {
+        $data{type} = 'resolve_references';
+    } elsif ($directive eq 'FASTA') {
+        $data{type} = 'sequence';
+    } else {
+        @data{qw(type data)} = ($directive, $rest);
     }
     \%data;
 }
@@ -191,16 +195,16 @@ sub _init_stream {
 #  return @toplevel_feats;
 #}
 
-#sub next_seq() {
-#    my $self = shift;
-#    return unless $self->fasta_mode();
-#
-#    #first time next_seq has been called.  initialize Bio::SeqIO instance
-#    if(!$self->seqio){
-#      $self->seqio( Bio::SeqIO->new(-format => 'fasta', -fh => $self->_fh()) );
-#    }
-#    return $self->seqio->next_seq();
-#}
+sub next_seq() {
+    my $self = shift;
+    return unless $self->fasta_mode;
+    #first time next_seq has been called.  initialize Bio::SeqIO instance
+    if(!$self->seqio){
+        $self->{seen_seq}++;
+        $self->seqio( Bio::SeqIO->new(-format => 'fasta', -fh => $self->_fh()) );
+    }
+    return $self->seqio->next_seq();
+}
 
 =head2 write_feature()
 
@@ -244,26 +248,14 @@ sub _init_stream {
  Usage   : $obj->fasta_mode($newval)
  Function: 
  Example : 
- Returns : value of fasta_mode (a scalar)
- Args    : on set, new value (a scalar or undef, optional)
-
-Side effect when setting: rewind the file handle a little bit to get the last
-carriage return that was swallowed when the previous line was processed.
+ Returns : Value of fasta_mode (a scalar)
+ Args    : None
 
 =cut
 
-#sub fasta_mode {
-#    my($self,$val) = @_;
-#  
-#    $self->{'fasta_mode'} = $val if defined($val);
-#  
-#    if ($val && $val == 1) {
-#    #  seek $self->_fh(), -1, 1; #rewind 1 byte to get the previous line's \n
-#        $self->_pushback("\n"); # this is bad!!!!
-#    }
-#  
-#    return $self->{'fasta_mode'};
-#}
+sub fasta_mode {
+    return shift->{seen_seq};
+}
 
 =head2 seqio()
 
@@ -274,11 +266,11 @@ carriage return that was swallowed when the previous line was processed.
 
 =cut
 
-#sub seqio {
-#    my($self,$val) = @_;
-#    $self->{'seqio'} = $val if defined($val);
-#    return $self->{'seqio'};
-#}
+sub seqio {
+    my($self,$val) = @_;
+    $self->{'seqio'} = $val if defined($val);
+    return $self->{'seqio'};
+}
 
 =head2 sequence_region()
 

@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Bio::SeqFeature::Generic;
+use Bio::SeqIO;
 
 my $ct = 0;
 my %GFF3_RESERVED_TAGS = map {$_ => $ct++ }
@@ -13,15 +14,10 @@ my %GFF3_RESERVED_TAGS = map {$_ => $ct++ }
     Derives_from Note Dbxref Ontology_term Index);
     
 my %HANDLERS = (
-    #'directive'             => \&directives,
-    #'sequence'              => \&sequence,
-    #'resolve-references'    => \&resolve_refs,
-    #'source-ontology'       => \&source_ontology,
-    #'feature-ontology'      => \&feature_ontology,
-    #'attribute-ontology'    => \&attribute_ontology,
-    #'genome-build'          => \&genome_build,
-    #'sequence-region'       => \&sequence_region,
-    'feature'               => \&seqfeature
+    'directive'             => \&directives,
+    'comment'               => \&comment,
+    'feature'               => \&seqfeature,
+    'sequence'              => \&sequence,
 );
 
 sub new {
@@ -36,16 +32,16 @@ sub new {
 sub data_handler {
     my ($self, $data) = @_;
     my $nm = $data->{MODE} || $self->throw("No type tag defined!\n".Dumper($data));
-        
+    
     # this should handle data on the fly w/o caching; any caching should be 
     # done in the driver!
     my $method = (exists $self->{'handlers'}->{$nm}) ? ($self->{'handlers'}->{$nm}) :
                 (exists $self->{'handlers'}->{'_DEFAULT_'}) ? ($self->{'handlers'}->{'_DEFAULT_'}) :
                 undef;
-    # needs a can check, but $self->can isn't working here...
     
-    if ($method) {
-        return $self->$method($data);
+    # needs a can check, but $self->can oddly isn't working here...
+    if ($method && ref $method eq 'CODE') {
+        return $method->($data, $self);
     } else {
         $self->debug("No handler defined for $nm\n");
         return;
@@ -54,29 +50,41 @@ sub data_handler {
 
 sub handler_methods {
     my $self = shift;
-    if (!($self->{'handlers'})) {
-        $self->{'handlers'} = \%HANDLERS;
+    my $handlers = shift;
+    if (!($self->{'handlers'}) || defined $handlers && ref $handlers eq 'HASH') {
+        $self->{'handlers'} = $handlers || \%HANDLERS;
     }
     return ($self->{'handlers'});
 }
 
-sub format { shift->throw_not_implemented; }
+sub set_handler_helper {
+    my ($self, $name, $sub) = @_;
+    return if !($name && $sub);
+    $self->throw("Passed callback must be a code ref") if $sub && ref $sub eq 'CODE';
+    $self->{'handlers'}->{$name} = $sub;
+}
 
-sub reset_parameters { shift->throw_not_implemented; }
-
-sub get_parameters { shift->throw_not_implemented; }
-
-sub set_parameters { shift->throw_not_implemented; }
-
-# employ a lightweight location factory, one that just generates segments
-# use for GenBank/EMBL, other formats with complex locations
-
-sub location_factory { shift->throw_not_implemented; }
-
-sub mode {
+sub format {
     my $self = shift;
-    return $self->{mode} = shift if @_;
-    return $self->{mode};
+    return $self->{format} = shift if @_;
+    return $self->{format};
+}
+
+sub reset_parameters {
+    my ($self) = @_;
+    $self->{parameters} = {};
+}
+
+sub get_parameters {
+    my ($self, $param) = @_;
+    return if !($param);
+    $self->{parameters}->{$param};
+}
+
+sub set_parameters {
+    my ($self, $param, $value) = @_;
+    return if !($param && defined $value);
+    $self->{parameters}->{$param} = $value;
 }
 
 # this needs to be a Bio::SeqFeature::CollectionI that can distinguish
@@ -88,13 +96,27 @@ sub feature_collection {
     return $self->{feature_collection};
 }
 
+sub file_handle {
+    return shift->{-fh};
+}
+
 ################ HANDLERS ################
 
+# Handler methods are designed so they are called as sub references, not as
+# class or instance based calls. This decouples them from any handler class and
+# allow some customization (for instance, if we need the parent parser to
+# override them). The parser in this case is ultimately responsible for
+# determining what happens to the data.
+
 sub seqfeature {
-    my ($self, $data) = @_;
-    my %sf_data = map {'-'.$_ => $data->{DATA}->{$_}} sort keys %{$data->{DATA}};
+    my ($data, $handler) = @_;
+    my %sf_data = map {'-'.$_ => $data->{DATA}->{$_}}
+        grep { $data->{DATA}->{$_} ne '.' }
+        sort keys %{$data->{DATA}};
+    
+    # can do some custom GFF3-related bits here...
     if ($data->{DATA}->{attributes}) {
-        delete $sf_data{attributes};
+        delete $sf_data{-attributes};
         my %tags;
         for my $kv (split(/\s*;\s*/, $data->{DATA}->{attributes})) {
             my ($key, $rest) = split(/[=\s]/, $kv, 2);
@@ -102,12 +124,46 @@ sub seqfeature {
             my @vals = split(',',$rest);
             $tags{$key} = \@vals;
         }
-        $data->{tags} = \%tags;
+        $sf_data{-tags} = \%tags;
     }
     return Bio::SeqFeature::Generic->new(%sf_data);
 }
 
+sub directives {
+    my ($data, $handler) = @_;
+    my $directive = $data->{DATA}->{type};
+    if ($directive eq 'sequence') {
+        my $fh = $handler->file_handle;
+        $handler->throw("Handler doesn't have a set file handle") if !$fh;
+        return Bio::SeqIO->new(-format => 'fasta',
+                       -fh     => $fh);
+    } elsif ($directive eq 'sequence-region') {
+        my $sf_data = $data->{DATA};
+        return Bio::SeqFeature::Generic->new(-start => $sf_data->{start},
+                                             -end   => $sf_data->{end},
+                                             -display_name => $sf_data->{id},
+                                             -primary_tag  => 'region');
+    } else {
+        # default?
+    }
+    return;
+}
 
+sub sequence {
+    my ($data, $handler) = @_;
+    # if we reach this point, the sequence stream has already been read, so
+    # we need to seek back to the start point.  Note if the stream isn't seekable
+    # this will fail spectacularly at this point!
+    my ($start, $len) = @{$data}{qw(START LENGTH)};
+    my $fh = $handler->file_handle;
+    $handler->throw("Handler doesn't have a set file handle") if !$fh;
+    seek($fh, $start, 0);
+    return Bio::SeqIO->new(-format => 'fasta',
+                           -fh     => $fh);
+}
+
+# no op, we just skip these
+sub comment {}
 
 1;
 
