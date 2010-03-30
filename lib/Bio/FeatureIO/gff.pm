@@ -140,7 +140,8 @@ sub directive {
 sub handler {
     my ($self, $handler) = @_;
     if ($handler) {
-        $self->throw("Handler must be a Bio::HandlerBaseI") unless blessed($handler) && $handler->isa('Bio::HandlerBaseI');
+        $self->throw("Handler must be a Bio::HandlerBaseI") unless
+        blessed($handler) && $handler->isa('Bio::HandlerBaseI');
         $self->{handler} = $handler;
     }
     return $self->{handler} if $self->{handler};
