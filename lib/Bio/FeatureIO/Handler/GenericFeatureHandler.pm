@@ -33,6 +33,8 @@ sub data_handler {
     my ($self, $data) = @_;
     my $nm = $data->{MODE} || $self->throw("No type tag defined!\n".Dumper($data));
     
+    $self->set_parameters('mode', $nm);
+    
     # this should handle data on the fly w/o caching; any caching should be 
     # done in the driver!
     my $method = (exists $self->{'handlers'}->{$nm}) ? ($self->{'handlers'}->{$nm}) :
@@ -98,6 +100,11 @@ sub feature_collection {
 
 sub file_handle {
     return shift->{-fh};
+}
+
+sub mode {
+    my ($self) = @_;
+    $self->{parameters}->{mode};
 }
 
 ################ HANDLERS ################

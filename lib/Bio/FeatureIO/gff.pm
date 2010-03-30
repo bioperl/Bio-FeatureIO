@@ -4,7 +4,7 @@ use base qw(Bio::FeatureIO);
 
 use strict;
 use warnings;
-use URI::Escape;
+#use URI::Escape;
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 use Scalar::Util qw(blessed);
 use Data::Dumper;
@@ -43,7 +43,7 @@ sub next_feature {
     while (my $ds = $self->next_dataset) {
         # leave it to the handler to decide when a feature is returned
         while (my $object = $self->handler->data_handler($ds)) {
-            return $object if $object->isa('Bio::SeqFeature::Generic');
+            return $object if $object->isa('Bio::SeqFeatureI');
             if ($object->isa('Bio::SeqIO')) {
                 $self->{seen_seq}++;
                 $self->seqio($object);
@@ -65,8 +65,6 @@ specific chunk of data passed in is also passed along, primarily if one wanted
 to create lazy feature collections .
 
 =cut
-
-# lowest level parser, returns simple hash refs
 
 sub next_dataset {
     my $self = shift;
@@ -128,7 +126,7 @@ sub directive {
     } elsif ($directive eq 'genome-build') {
         @data{qw(type source buildname)} = ($directive, split(/\s+/, $rest));
     } elsif ($directive eq '#') {
-        $data{type} = 'resolve_references';
+        $data{type} = 'resolve-references';
     } elsif ($directive eq 'FASTA') {
         $data{type} = 'sequence';
     } else {
@@ -156,45 +154,45 @@ sub _init_stream {
         ($start >= 0) ?  ($start, 'seekable') : (0, 'string')
 }
 
-#sub next_feature_group {
-#  my $self = shift;
-#
-#  my $feat;
-#  my %seen_ids;
-#  my @all_feats;
-#  my @toplevel_feats;
-#
-#  $self->{group_not_done} = 1;
-#
-#  while ($self->{group_not_done} && ($feat = $self->next_feature()) && defined($feat)) {
-#	# we start by collecting all features in the group and
-#	# memorizing those which have an ID attribute
-#    my $anno_ID = $feat->get_Annotations('ID');
-#	if(ref($anno_ID)) {
-#      my $attr_ID = $anno_ID->value;
-#      $self->throw("Oops! ID $attr_ID exists more than once in your file!")
-#		if (exists($seen_ids{$attr_ID}));
-#      $seen_ids{$attr_ID} = $feat;
-#	}
-#	push(@all_feats, $feat);
-#  }
-#
-#  # assemble the top-level features
-#  foreach $feat (@all_feats) {
-#	my @parents = $feat->get_Annotations('Parent');
-#	if (@parents) {
-#      foreach my $parent (@parents) {
-#		my $parent_id = $parent->value;
-#		$self->throw("Parent with ID $parent_id not found!") unless (exists($seen_ids{$parent_id}));
-#		$seen_ids{$parent_id}->add_SeqFeature($feat);
-#      }
-#	} else {
-#	    push(@toplevel_feats, $feat);
-#      }
-#  }
-#
-#  return @toplevel_feats;
-#}
+sub next_feature_group {
+    my $self = shift;
+  
+    my $feat;
+    my %seen_ids;
+    my @all_feats;
+    my @toplevel_feats;
+  
+    $self->{group_not_done} = 1;
+  
+    while ($self->{group_not_done} && ($feat = $self->next_feature()) && defined($feat)) {
+      # we start by collecting all features in the group and
+      # memorizing those which have an ID attribute
+      my $anno_ID = $feat->get_Annotations('ID');
+      if(ref($anno_ID)) {
+        my $attr_ID = $anno_ID->value;
+        $self->throw("Oops! ID $attr_ID exists more than once in your file!")
+          if (exists($seen_ids{$attr_ID}));
+        $seen_ids{$attr_ID} = $feat;
+      }
+      push(@all_feats, $feat);
+    }
+  
+    # assemble the top-level features
+    foreach $feat (@all_feats) {
+      my @parents = $feat->get_Annotations('Parent');
+      if (@parents) {
+        foreach my $parent (@parents) {
+          my $parent_id = $parent->value;
+          $self->throw("Parent with ID $parent_id not found!") unless (exists($seen_ids{$parent_id}));
+          $seen_ids{$parent_id}->add_SeqFeature($feat);
+        }
+      } else {
+          push(@toplevel_feats, $feat);
+        }
+    }
+  
+    return @toplevel_feats;
+}
 
 sub next_seq() {
     my $self = shift;
@@ -273,6 +271,8 @@ sub seqio {
     return $self->{'seqio'};
 }
 
+# TODO: reimplement to call the handler's set parameters (getter only)
+
 =head2 sequence_region()
 
  Usage   :
@@ -306,13 +306,14 @@ sub seqio {
 
 =cut
 
-#sub so {
-#    my $self = shift;
-#    my $val = shift;
-#    ###FIXME validate $val object's type
-#    $self->{so} = $val if defined($val);
-#    return $self->{so};
-#}
+sub so {
+    shift->throw_not_implemented;
+    #my $self = shift;
+    #my $val = shift;
+    ####FIXME validate $val object's type
+    #$self->{so} = $val if defined($val);
+    #return $self->{so};
+}
 
 =head2 validate()
 
@@ -325,11 +326,12 @@ sub seqio {
 
 =cut
 
-#sub validate {
-#    my($self,$val) = @_;
-#    $self->{'validate'} = $val if defined($val);
-#    return $self->{'validate'};
-#}
+sub validate {
+    shift->throw_not_implemented;    
+    #my($self,$val) = @_;
+    #$self->{'validate'} = $val if defined($val);
+    #return $self->{'validate'};
+}
 
 =head2 version()
 
@@ -340,125 +342,25 @@ sub seqio {
 
 =cut
 
-#sub version {
-#    my $self = shift;
-#    my $val = shift;
-#    my %valid = map {$_=>1} (1, 2, 2.5, 3);
-#    if(defined $val && $valid{$val}){
-#        return $self->{'version'} = $val;
-#    }
-#    elsif(defined($val)){
-#        $self->throw('invalid version.  valid versions: '.join(' ', sort keys %valid));
-#    }
-#    return $self->{'version'};
-#}
+sub version {
+    shift->throw_not_implemented;
+    #my $self = shift;
+    #my $val = shift;
+    #my %valid = map {$_=>1} (1, 2, 2.5, 3);
+    #if(defined $val && $valid{$val}){
+    #    return $self->{'version'} = $val;
+    #}
+    #elsif(defined($val)){
+    #    $self->throw('invalid version.  valid versions: '.join(' ', sort keys %valid));
+    #}
+    #return $self->{'version'};
+}
 
 ################################################################################
 
 =head1 INTERNAL METHODS
 
 =cut
-
-=head2 _buffer_feature()
-
- Usage   :
- Function: ###FIXME
- Returns : 
- Args    :
-
-=cut
-
-#sub _buffer_feature {
-#    my ($self,$f) = @_;
-#  
-#    if ( $f ) {
-#        push @{ $self->{'buffer'} }, $f;
-#        return $f;
-#    }
-#    elsif ( $self->{'buffer'} ) {
-#        return shift @{ $self->{'buffer'} };
-#    }
-#    else {
-#        return;
-#    }
-#}
-
-=head1 _handle_directive()
-
-this method is called for lines beginning with '##'.
-
-=cut
-
-#sub _handle_directive {
-#    my($self,$directive_string) = @_;
-#    
-#    $directive_string =~ s/^##//; #remove escape
-#    my($directive,@arg) = split /\s+/, $directive_string;
-#
-#    if($directive eq 'gff-version'){
-#        my $version = $arg[0];
-#        if($version != 3) {
-#            $self->throw("this is not a gff version 3 document, it is version '$version'");
-#        }
-#    } 
-#    elsif ($directive eq 'sequence-region') {
-#        # RAE: Sequence regions are in the format sequence-region seqid start end
-#        # for these we want to store the seqid, start, and end. Then when we
-#        # validate we want to make sure that the features are within the
-#        # seqid/start/end
-#    
-#        $self->throw('Both start and end for sequence region should be defined')
-#          unless $arg[1] && $arg[2];
-#        my $fta = Bio::Annotation::OntologyTerm->new();
-#        $fta->name( 'region');
-#    
-#        my $f = Bio::SeqFeature::Annotated->new();
-#        $f->seq_id( $arg[0] );
-#        $f->start(  $arg[1] );
-#        $f->end(    $arg[2] );
-#    
-#        $f->type(   $fta    );
-#    
-#        #cache this in sequence_region(), we may need it for validation later.
-#        $self->sequence_region($f->seq_id => $f);
-#    
-#        #NOTE: is this the right thing to do -- treat this as a feature? -allenday
-#        #buffer it to be returned by next_feature()
-#        $self->_buffer_feature($f);
-#    }
-#  
-#    elsif($directive eq 'feature-ontology'){
-#        $self->warn("'##$directive' directive handling not yet implemented");
-#    }
-#  
-#    elsif($directive eq 'attribute-ontology'){
-#        $self->warn("'##$directive' directive handling not yet implemented");
-#    }
-#  
-#    elsif($directive eq 'source-ontology'){
-#        $self->warn("'##$directive' directive handling not yet implemented");
-#    }
-#  
-#    elsif($directive eq 'FASTA' or $directive =~ /^>/){
-#        #next_seq() will take care of this.
-#        $self->fasta_mode(1);
-#        return;
-#    }
-#  
-#    elsif($directive eq '#'){
-#        #all forward references resolved
-#        $self->{group_not_done} = 0;
-#    }
-#  
-#    elsif($directive eq 'organism') {
-#        my $organism = $arg[0];
-#        $self->organism($organism);
-#    }
-#  
-#    else {
-#        $self->throw("don't know what do do with directive: '##".$directive."'");
-#    }
-#}
 
 =head1 _handle_feature()
 
@@ -714,17 +616,17 @@ Bio::SeqFeature::Annotated object.
 #    return $feat;
 #}
 
-=head2 _handle_non_reserved_tag()
-
- Usage   : $self->_handle_non_reserved_tag($feature,$tag,$value)
- Function: Deal with non-reserved word tags in the ninth column
- Returns : An updated Bio::SeqFeature::Annotated object
- Args    : A Bio::SeqFeature::Annotated and a tag/value pair
-
-Note that this method can be overridden in a subclass to provide
-special handling of non-reserved word tags.
-
-=cut
+#=head2 _handle_non_reserved_tag()
+#
+# Usage   : $self->_handle_non_reserved_tag($feature,$tag,$value)
+# Function: Deal with non-reserved word tags in the ninth column
+# Returns : An updated Bio::SeqFeature::Annotated object
+# Args    : A Bio::SeqFeature::Annotated and a tag/value pair
+#
+#Note that this method can be overridden in a subclass to provide
+#special handling of non-reserved word tags.
+#
+#=cut
 
 #sub _handle_non_reserved_tag {
 #  my $self = shift;
@@ -748,11 +650,11 @@ special handling of non-reserved word tags.
 #  return $feat;
 #}
 
-=head1 organims
-
-Gets/sets the organims from the organism directive
-
-=cut
+#=head1 organims
+#
+#Gets/sets the organims from the organism directive
+#
+#=cut
 
 #sub organism {
 #    my $self = shift;
