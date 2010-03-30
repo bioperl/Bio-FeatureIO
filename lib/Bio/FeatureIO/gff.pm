@@ -22,14 +22,15 @@ sub _initialize {
   
     $self->SUPER::_initialize(@args);
     
-    my ($handler, $handler_args, $format) =
-        $self->_rearrange([qw(HANDLER HANDLER_ARGS FORMAT)] , @args);
+    my ($handler, $handler_args, $format, $group_by) =
+        $self->_rearrange([qw(HANDLER HANDLER_ARGS FORMAT GROUP_BY)] , @args);
     $format ||= 'GFF3';
     $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(-verbose => $self->verbose,
                                                                      -fh      => $self->_fh);
     if (!ref($handler) || !$handler->isa('Bio::HandlerBaseI')) {
         $self->throw('Passed object must be a Bio::HandlerBaseI');
     }
+    $group_by       && $self->group_by_type($group_by);
     $handler->format($format);
     $self->_init_stream();
     $self->handler($handler);
@@ -45,7 +46,6 @@ sub next_feature {
         while (my $object = $self->handler->data_handler($ds)) {
             return $object if $object->isa('Bio::SeqFeatureI');
             if ($object->isa('Bio::SeqIO')) {
-                $self->{seen_seq}++;
                 $self->seqio($object);
                 return;
             }
@@ -154,44 +154,49 @@ sub _init_stream {
         ($start >= 0) ?  ($start, 'seekable') : (0, 'string')
 }
 
+# this is a preliminary eager implementation of grouping features; this
+# probably should delegate to a database for feature groups
+
 sub next_feature_group {
     my $self = shift;
-  
-    my $feat;
+    $self->{sf_cache} ||= [];
     my %seen_ids;
     my @all_feats;
     my @toplevel_feats;
-  
-    $self->{group_not_done} = 1;
-  
-    while ($self->{group_not_done} && ($feat = $self->next_feature()) && defined($feat)) {
-      # we start by collecting all features in the group and
-      # memorizing those which have an ID attribute
-      my $anno_ID = $feat->get_Annotations('ID');
-      if(ref($anno_ID)) {
-        my $attr_ID = $anno_ID->value;
-        $self->throw("Oops! ID $attr_ID exists more than once in your file!")
-          if (exists($seen_ids{$attr_ID}));
-        $seen_ids{$attr_ID} = $feat;
-      }
-      push(@all_feats, $feat);
-    }
-  
-    # assemble the top-level features
-    foreach $feat (@all_feats) {
-      my @parents = $feat->get_Annotations('Parent');
-      if (@parents) {
-        foreach my $parent (@parents) {
-          my $parent_id = $parent->value;
-          $self->throw("Parent with ID $parent_id not found!") unless (exists($seen_ids{$parent_id}));
-          $seen_ids{$parent_id}->add_SeqFeature($feat);
-        }
-      } else {
-          push(@toplevel_feats, $feat);
+        
+    # will need to cache some SF's
+    while (my $feat = $self->next_feature) {
+        if ($feat->has_tag('ID')) {
+            my ($id) = $feat->get_tag_values('ID');
+            $self->throw("Oops! ID $id exists more than once in your file!")
+                if (exists($seen_ids{$id}));
+            $seen_ids{$id} = $feat;
+            push @all_feats, $feat;
+            push @toplevel_feats, $feat if !$feat->has_tag('Parent');
+        } 
+        if ($feat->has_tag('Parent')) {
+            my @parents = $feat->get_tag_values('Parent');
+            for my $parent_id (@parents) {
+                if (exists $seen_ids{$parent_id}) {
+                    $seen_ids{$parent_id}->add_SeqFeature($feat);
+                } else {
+                    $self->throw("Parent with ID $parent_id not found!");
+                }
+            }
         }
     }
-  
+    
     return @toplevel_feats;
+}
+    
+sub _cache_features {
+    my ($self, $sf) = @_;
+    push @{$self->{sf_cache}}, $sf;
+}
+    
+sub _next_cached_feature {
+    my $self = shift;
+    @{$self->{sf_cache}} ? shift @{$self->{sf_cache}} : $self->next_feature;
 }
 
 sub next_seq() {
@@ -199,7 +204,6 @@ sub next_seq() {
     return unless $self->fasta_mode;
     #first time next_seq has been called.  initialize Bio::SeqIO instance
     if(!$self->seqio){
-        $self->{seen_seq}++;
         $self->seqio( Bio::SeqIO->new(-format => 'fasta', -fh => $self->_fh()) );
     }
     return $self->seqio->next_seq();
@@ -253,7 +257,7 @@ sub next_seq() {
 =cut
 
 sub fasta_mode {
-    return shift->{seen_seq};
+    return shift->handler->fasta_mode;
 }
 
 =head2 seqio()

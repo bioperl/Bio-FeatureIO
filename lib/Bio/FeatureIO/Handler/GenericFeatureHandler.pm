@@ -33,7 +33,7 @@ sub data_handler {
     my ($self, $data) = @_;
     my $nm = $data->{MODE} || $self->throw("No type tag defined!\n".Dumper($data));
     
-    $self->set_parameters('mode', $nm);
+    $self->set_parameters('mode', $nm eq 'directive' ? $data->{DATA}->{type} : $nm);
     
     # this should handle data on the fly w/o caching; any caching should be 
     # done in the driver!
@@ -102,9 +102,18 @@ sub file_handle {
     return shift->{-fh};
 }
 
-sub mode {
-    my ($self) = @_;
-    $self->{parameters}->{mode};
+sub fasta_mode {
+    my $self = shift;
+    my $mode = $self->get_parameters('mode');
+    return unless $mode;
+    $mode eq 'sequence' || $mode eq 'sequence-region' ? 1 : 0;
+}
+
+sub resolve_references {
+    my $self = shift;
+    my $mode = $self->get_parameters('mode');
+    return unless $mode;
+    $mode eq 'resolve-references' || $mode eq 'sequence' || $mode eq 'sequence-region' ? 1 : 0;
 }
 
 ################ HANDLERS ################
@@ -117,6 +126,7 @@ sub mode {
 
 sub seqfeature {
     my ($data, $handler) = @_;
+
     my %sf_data = map {'-'.$_ => $data->{DATA}->{$_}}
         grep { $data->{DATA}->{$_} ne '.' }
         sort keys %{$data->{DATA}};
@@ -127,12 +137,13 @@ sub seqfeature {
         my %tags;
         for my $kv (split(/\s*;\s*/, $data->{DATA}->{attributes})) {
             my ($key, $rest) = split(/[=\s]/, $kv, 2);
-            # add optional URI unescaping here
+            # add optional/required URI unescaping here
             my @vals = split(',',$rest);
             $tags{$key} = \@vals;
         }
-        $sf_data{-tags} = \%tags;
+        $sf_data{-tag} = \%tags;
     }
+    
     return Bio::SeqFeature::Generic->new(%sf_data);
 }
 
