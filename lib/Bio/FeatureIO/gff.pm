@@ -22,15 +22,14 @@ sub _initialize {
   
     $self->SUPER::_initialize(@args);
     
-    my ($handler, $handler_args, $format, $group_by) =
-        $self->_rearrange([qw(HANDLER HANDLER_ARGS FORMAT GROUP_BY)] , @args);
+    my ($handler, $handler_args, $format) =
+        $self->_rearrange([qw(HANDLER HANDLER_ARGS FORMAT)] , @args);
     $format ||= 'GFF3';
     $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(-verbose => $self->verbose,
                                                                      -fh      => $self->_fh);
     if (!ref($handler) || !$handler->isa('Bio::HandlerBaseI')) {
         $self->throw('Passed object must be a Bio::HandlerBaseI');
     }
-    $group_by       && $self->group_by_type($group_by);
     $handler->format($format);
     $self->_init_stream();
     $self->handler($handler);
@@ -93,7 +92,7 @@ sub next_dataset {
             chomp $line;
             $self->{mode} = $dataset->{MODE} = 'feature';
             my %feat;
-            @feat{qw(region source type start end score strand phase attributes)}
+            @feat{qw(seq_id source primary_tag start end score strand phase attributes)}
                 = split("\t",$line,9);
             $dataset->{DATA} = \%feat;
         } else {

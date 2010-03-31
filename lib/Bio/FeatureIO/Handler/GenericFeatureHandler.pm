@@ -144,6 +144,8 @@ sub seqfeature {
         $sf_data{-tag} = \%tags;
     }
     
+    #print Dumper \%sf_data;
+    
     return Bio::SeqFeature::Generic->new(%sf_data);
 }
 
@@ -157,9 +159,10 @@ sub directives {
                        -fh     => $fh);
     } elsif ($directive eq 'sequence-region') {
         my $sf_data = $data->{DATA};
-        return Bio::SeqFeature::Generic->new(-start => $sf_data->{start},
-                                             -end   => $sf_data->{end},
-                                             -display_name => $sf_data->{id},
+        return Bio::SeqFeature::Generic->new(-start     => $sf_data->{start},
+                                             -end       => $sf_data->{end},
+                                             -strand    => 1,
+                                             -seq_id    => $sf_data->{id},
                                              -primary_tag  => 'region');
     } else {
         # default?
