@@ -124,6 +124,7 @@ sub resolve_references {
 # override them). The parser in this case is ultimately responsible for
 # determining what happens to the data.
 
+# Note this just passes in the data w/o munging it beyond recognition
 sub seqfeature {
     my ($data, $handler) = @_;
 
@@ -131,10 +132,11 @@ sub seqfeature {
         grep { $data->{DATA}->{$_} ne '.' }
         sort keys %{$data->{DATA}};
     
-    # can do some custom GFF3-related bits here...
     if ($data->{DATA}->{attributes}) {
         delete $sf_data{-attributes};
         my %tags;
+        
+        # TODO: GFF3-specific split; need to make more general
         for my $kv (split(/\s*;\s*/, $data->{DATA}->{attributes})) {
             my ($key, $rest) = split(/[=\s]/, $kv, 2);
             # add optional/required URI unescaping here
@@ -143,8 +145,6 @@ sub seqfeature {
         }
         $sf_data{-tag} = \%tags;
     }
-    
-    #print Dumper \%sf_data;
     
     return Bio::SeqFeature::Generic->new(%sf_data);
 }
@@ -158,6 +158,9 @@ sub directives {
         return Bio::SeqIO->new(-format => 'fasta',
                        -fh     => $fh);
     } elsif ($directive eq 'sequence-region') {
+        # we can make returning a features optional here, but we should do
+        # something with the data in all cases
+        
         my $sf_data = $data->{DATA};
         return Bio::SeqFeature::Generic->new(-start     => $sf_data->{start},
                                              -end       => $sf_data->{end},
@@ -165,7 +168,7 @@ sub directives {
                                              -seq_id    => $sf_data->{id},
                                              -primary_tag  => 'region');
     } else {
-        # default?
+        # defaults for other directives?
     }
     return;
 }

@@ -153,49 +153,43 @@ sub _init_stream {
         ($start >= 0) ?  ($start, 'seekable') : (0, 'string')
 }
 
-# this is a preliminary eager implementation of grouping features; this
-# probably should delegate to a database for feature groups
-
 sub next_feature_group {
     my $self = shift;
+    return if $self->fasta_mode;
     $self->{sf_cache} ||= [];
     my %seen_ids;
     my @all_feats;
     my @toplevel_feats;
-        
-    # will need to cache some SF's
-    while (my $feat = $self->next_feature) {
-        if ($feat->has_tag('ID')) {
-            my ($id) = $feat->get_tag_values('ID');
+    
+    while (my $ds = $self->next_dataset) {
+        my $object = $self->handler->data_handler($ds);
+        #print STDERR "Mode:".$self->handler->get_parameters('mode')."\n";
+        if ($object && $object->isa('Bio::SeqIO')) {
+            $self->seqio($object);
+            last;
+        }
+        last if $self->handler->resolve_references;
+        next unless $object;
+        if ($object->has_tag('ID')) {
+            my ($id) = $object->get_tag_values('ID');
             $self->throw("Oops! ID $id exists more than once in your file!")
                 if (exists($seen_ids{$id}));
-            $seen_ids{$id} = $feat;
-            push @all_feats, $feat;
-            push @toplevel_feats, $feat if !$feat->has_tag('Parent');
-        } 
-        if ($feat->has_tag('Parent')) {
-            my @parents = $feat->get_tag_values('Parent');
+            $seen_ids{$id} = $object;
+            push @all_feats, $object;
+            push @toplevel_feats, $object if !$object->has_tag('Parent');
+        }
+        if ($object->has_tag('Parent')) {
+            my @parents = $object->get_tag_values('Parent');
             for my $parent_id (@parents) {
                 if (exists $seen_ids{$parent_id}) {
-                    $seen_ids{$parent_id}->add_SeqFeature($feat);
+                    $seen_ids{$parent_id}->add_SeqFeature($object);
                 } else {
                     $self->throw("Parent with ID $parent_id not found!");
                 }
             }
         }
     }
-    
     return @toplevel_feats;
-}
-    
-sub _cache_features {
-    my ($self, $sf) = @_;
-    push @{$self->{sf_cache}}, $sf;
-}
-    
-sub _next_cached_feature {
-    my $self = shift;
-    @{$self->{sf_cache}} ? shift @{$self->{sf_cache}} : $self->next_feature;
 }
 
 sub next_seq() {
