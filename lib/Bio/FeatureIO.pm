@@ -268,7 +268,7 @@ use warnings;
 
 use Symbol;
 
-use base qw(Bio::Root::IO Bio::Event::SimpleEventGeneratorI);
+use base qw(Bio::Root::IO);
 
 =head2 new
 
