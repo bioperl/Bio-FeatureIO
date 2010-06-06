@@ -128,6 +128,7 @@ while($f = $io->next_feature()){
         is($f->end, 62469236);
         is($f->strand, -1);
     }
+}
 
 #then read features
 while($f = $io->next_feature()){
@@ -373,3 +374,4 @@ is($scount , 1);
 done_testing();
 
 exit;
+__END__
