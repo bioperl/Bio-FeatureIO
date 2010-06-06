@@ -7,7 +7,7 @@ BEGIN {
     use lib '.';
     use Bio::Root::Test;
     
-    test_begin(-tests => 34, 
+    test_begin( 
 	       -requires_modules => [qw(URI::Escape Graph::Directed)],
 	       -requires_networking => 1
 	);
@@ -27,9 +27,12 @@ my $sfa = Bio::SeqFeature::Annotated->new(-start => 1,
 					  -display_name => 'test.annot',
 					  -seq_id => 'test.displayname' );
 
+
+isa_ok($fea, "Bio::SeqFeatureI",'isa SeqFeatureI');
+isa_ok($fea, "Bio::AnnotatableI",'isa AnnotatableI');
 ok (defined $sfa);
 my $loc = $sfa->location;
-ok $loc->isa("Bio::Location::Simple");    
+ok $loc->isa("Bio::Location::Simple");
 ok $sfa->display_name eq 'test.annot';
 
 #test bsfa::from_feature
@@ -95,3 +98,6 @@ is $sfa3->score(), 11;
 $sfa3->score(0);
 is $sfa3->score(), 0;	# test that setting to 0 no longer is overriddent to set score to '.' (fixed in Bio::SeqFeature::Annotated version 1.3.7)
 
+done_testing();
+
+exit;
