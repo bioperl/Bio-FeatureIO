@@ -12,7 +12,6 @@ BEGIN {
 	       -requires_networking => 1
 	);
 	
-	use_ok('Bio::SeqFeature::Generic');
 	use_ok('Bio::SeqFeature::Annotated');
 }
 
@@ -28,8 +27,8 @@ my $sfa = Bio::SeqFeature::Annotated->new(-start => 1,
 					  -seq_id => 'test.displayname' );
 
 
-isa_ok($fea, "Bio::SeqFeatureI",'isa SeqFeatureI');
-isa_ok($fea, "Bio::AnnotatableI",'isa AnnotatableI');
+isa_ok($sfa, "Bio::SeqFeatureI",'isa SeqFeatureI');
+isa_ok($sfa, "Bio::AnnotatableI",'isa AnnotatableI');
 ok (defined $sfa);
 my $loc = $sfa->location;
 ok $loc->isa("Bio::Location::Simple");
@@ -92,6 +91,7 @@ is $sfa3->get_Annotations('new')->value,1;
 # simple scalar, and here it is a Bio::Annotation::SimpleValue
 # By popular vote there is no operator overloading, so this needs to be
 # resolved
+
 is $sfa3->score(), 12; 
 $sfa3->score(11);
 is $sfa3->score(), 11; 
