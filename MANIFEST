@@ -11,16 +11,19 @@ inc/Test/More.pm
 inc/Test/Simple.pm
 inc/Test/Tutorial.pod
 inc/Test/Warn.pm
-lib/Bio/Factory/FeatureFactory.pm
 lib/Bio/FeatureIO.pm
 lib/Bio/FeatureIO/bed.pm
 lib/Bio/FeatureIO/gff.pm
 lib/Bio/FeatureIO/gtf.pm
+lib/Bio/FeatureIO/Handler/GenericFeatureHandler.pm
 lib/Bio/FeatureIO/interpro.pm
 lib/Bio/FeatureIO/ptt.pm
 lib/Bio/FeatureIO/vecscreen_simple.pm
+lib/Bio/SeqFeature/Annotated.pm
 MANIFEST			This list of files
 README
+t/bed.t
+t/data/1.bed
 t/data/directives.gff3
 t/data/dna1.fa
 t/data/hybrid1.gff3
@@ -33,4 +36,5 @@ t/FeatureIO.t
 t/FeatureIO.x
 t/gff.t
 t/ptt.t
+t/SeqFeature/Annotated.t
 t/vecscreen.t

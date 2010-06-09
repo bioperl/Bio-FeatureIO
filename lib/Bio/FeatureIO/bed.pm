@@ -78,7 +78,6 @@ use strict;
 use base qw(Bio::FeatureIO);
 use Bio::SeqFeature::Annotated;
 use Bio::Annotation::SimpleValue;
-use Bio::OntologyIO;
 use Scalar::Util qw(looks_like_number);
 
 =head2 _initialize
@@ -228,8 +227,10 @@ sub next_feature {
     return $self->next_feature;
   }
   
-  my $feature = Bio::SeqFeature::Annotated->new(-start  => $start, # start is 0 based
-                                                -end    => --$end, # end is not part of the feature
+  # start is 0 based, need it 1-based;
+  # end is one beyond the feature ends and thus already 1-based
+  my $feature = Bio::SeqFeature::Annotated->new(-start  => ++$start, 
+                                                -end    => $end, 
                                                 $score  ? (-score  => $score) : (),
                                                 $strand ? (-strand => $strand eq '+' ? 1 : -1) : ());
   

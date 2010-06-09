@@ -16,7 +16,7 @@
 
 =head1 NAME
 
-Bio::FeatureIO - Handler for FeatureIO
+Bio::FeatureIO - BioPerl IO classes for creating a stream of sequence features
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,11 @@ Bio::FeatureIO - Handler for FeatureIO
 
 =head1 DESCRIPTION
 
-An I/O iterator subsystem for genomic sequence features.
+An I/O iterator subsystem for genomic sequence features.  This set of parsers
+can be used on many levels:
+
+1) Simple parsing: the next_dataset() method returns hash-refs containing
+both the data parsed and 
 
 Bio::FeatureIO is a handler module for the formats in the FeatureIO set (eg,
 Bio::FeatureIO::GFF). It is the officially sanctioned way of getting at the
@@ -260,10 +264,11 @@ methods. Internal methods are usually preceded with a _
 package Bio::FeatureIO;
 
 use strict;
+use warnings;
 
 use Symbol;
 
-use base qw(Bio::Root::Root Bio::Root::IO);
+use base qw(Bio::Root::IO);
 
 =head2 new
 
@@ -281,37 +286,37 @@ use base qw(Bio::Root::Root Bio::Root::IO);
 my $entry = 0;
 
 sub new {
-  my ($caller,@args) = @_;
-  my $class = ref($caller) || $caller;
-
-  # or do we want to call SUPER on an object if $caller is an
-  # object?
-  if( $class =~ /Bio::FeatureIO::(\S+)/ ) {
-
-    my ($self) = $class->SUPER::new(@args);	
-    $self->_initialize(@args);
-    return $self;
-
-  } else {
-
-	my %param = @args;
-
-	@param{ map { lc $_ } keys %param } = values %param; # lowercase keys
-	my $format = $param{'-format'} ||
-      $class->_guess_format( $param{-file} || $ARGV[0] );
-	
-	if( ! $format ) {
-      if ($param{-file}) {
-        $format = $class->_guess_format($param{-file});
-      } elsif ($param{-fh}) {
-        $format = $class->_guess_format(undef);
+    my ($caller,@args) = @_;
+    my $class = ref($caller) || $caller;
+  
+    # or do we want to call SUPER on an object if $caller is an
+    # object?
+    if( $class =~ /Bio::FeatureIO::(\S+)/ ) {
+  
+      my ($self) = $class->SUPER::new(@args);	
+      $self->_initialize(@args);
+      return $self;
+  
+    } else {
+  
+      my %param = @args;
+  
+      @param{ map { lc $_ } keys %param } = values %param; # lowercase keys
+      my $format = $param{'-format'} ||
+        $class->_guess_format( $param{-file} || $ARGV[0] );
+      
+      if( ! $format ) {
+        if ($param{-file}) {
+          $format = $class->_guess_format($param{-file});
+        } elsif ($param{-fh}) {
+          $format = $class->_guess_format(undef);
+        }
       }
-	}
-	$format = "\L$format";	# normalize capitalization to lower case
-	return unless( $class->_load_format_module($format) );
-	return "Bio::FeatureIO::$format"->new(@args);
-
-  }
+      $format = "\L$format";	# normalize capitalization to lower case
+      return unless( $class->_load_format_module($format) );
+      return "Bio::FeatureIO::$format"->new(@args);
+  
+    }
 }
 
 =head2 newFh
@@ -330,9 +335,9 @@ See L<Bio::FeatureIO::Fh>
 =cut
 
 sub newFh {
-  my $class = shift;
-  return unless my $self = $class->new(@_);
-  return $self->fh;
+    my $class = shift;
+    return unless my $self = $class->new(@_);
+    return $self->fh;
 }
 
 =head2 fh
@@ -390,7 +395,7 @@ sub _initialize {
  Returns : a Bio::SeqFeatureI feature object
  Args    : none
 
-See L<Bio::Root::RootI>, L<Bio::SeqFeatureI>
+See L<Bio::Root::RootI>, L<Bio::SeqFeatureI>.
 
 =cut
 
@@ -412,6 +417,24 @@ sub next_feature {
 sub write_feature {
     my ($self, $seq) = @_;
     $self->throw_not_implemented();
+}
+
+=head2 seq
+
+ Title   : seq
+ Usage   : $obj->seq() OR $obj->seq($newSeq)
+ Example :
+ Returns : Bio::SeqI object
+ Args    : newSeq (optional)
+
+=cut
+
+sub seq {
+  my $self = shift;
+  my $val = shift;
+
+  $self->{'seq'} = $val if defined($val);
+  return $self->{'seq'};
 }
 
 =head2 _load_format_module
@@ -444,41 +467,6 @@ END
   ;
   }
   return $ok;
-}
-
-=head2 seq
-
- Title   : seq
- Usage   : $obj->seq() OR $obj->seq($newSeq)
- Example :
- Returns : Bio::SeqI object
- Args    : newSeq (optional)
-
-=cut
-
-sub seq {
-  my $self = shift;
-  my $val = shift;
-
-  $self->{'seq'} = $val if defined($val);
-  return $self->{'seq'};
-}
-
-=head2 _filehandle
-
- Title   : _filehandle
- Usage   : $obj->_filehandle($newval)
- Function: This method is deprecated. Call _fh() instead.
- Example :
- Returns : value of _filehandle
- Args    : newvalue (optional)
-
-
-=cut
-
-sub _filehandle {
-    my ($self,@args) = @_;
-    return $self->_fh(@args);
 }
 
 =head2 _guess_format

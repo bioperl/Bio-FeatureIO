@@ -8,6 +8,9 @@ use Bio::Root::Test;
 
 use_ok($_) for qw(
     Bio::FeatureIO
+    Bio::FeatureIO::gff
+    Bio::FeatureIO::ptt
+    Bio::FeatureIO::vecscreen_simple
 );
 
 done_testing();

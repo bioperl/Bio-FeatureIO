@@ -129,6 +129,11 @@ while($f = $io->next_feature()){
         is($f->strand, -1);
     }
 }
+
+#then read features
+while($f = $io->next_feature()){
+  $fcount++;
+}
 is($fcount , 6);
 
 #then try to read sequences again.
@@ -364,7 +369,9 @@ TODO: {
     local $TODO = 'Add clustering groups based on grouping within the file';
     ok(0);
 }
+is($scount , 1);
 
 done_testing();
 
 exit;
+__END__

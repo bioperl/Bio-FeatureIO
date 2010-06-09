@@ -1,20 +1,193 @@
-package Bio::Factory::FeatureFactory;
+package Bio::FeatureIO::Handler::GenericFeatureHandler;
 
-use base qw(Bio::Root::Root Bio::Factory::ObjectFactoryI);
+use base qw(Bio::Root::Root Bio::HandlerBaseI);
 
-sub unflattener {
+use strict;
+use warnings;
+use Data::Dumper;
+use Bio::SeqFeature::Generic;
+use Bio::SeqIO;
+
+my $ct = 0;
+my %GFF3_RESERVED_TAGS = map {$_ => $ct++ }
+    qw(ID Name Alias Parent Target Gap
+    Derives_from Note Dbxref Ontology_term Index);
     
+my %HANDLERS = (
+    'directive'             => \&directives,
+    'comment'               => \&comment,
+    'feature'               => \&seqfeature,
+    'sequence'              => \&sequence,
+);
+
+sub new {
+    my ($class, @args) = @_;
+    my $self = $class->SUPER::new(@args);
+    $self = {@args};
+    bless $self,$class;
+    $self->handler_methods();
+    return $self;
 }
 
-sub 
-
-sub create_feature {
+sub data_handler {
+    my ($self, $data) = @_;
+    my $nm = $data->{MODE} || $self->throw("No type tag defined!\n".Dumper($data));
     
+    $self->set_parameters('mode', $nm eq 'directive' ? $data->{DATA}->{type} : $nm);
+    
+    # this should handle data on the fly w/o caching; any caching should be 
+    # done in the driver!
+    my $method = (exists $self->{'handlers'}->{$nm}) ? ($self->{'handlers'}->{$nm}) :
+                (exists $self->{'handlers'}->{'_DEFAULT_'}) ? ($self->{'handlers'}->{'_DEFAULT_'}) :
+                undef;
+    
+    # needs a can check, but $self->can oddly isn't working here...
+    if ($method && ref $method eq 'CODE') {
+        return $method->($data, $self);
+    } else {
+        $self->debug("No handler defined for $nm\n");
+        return;
+    }
 }
+
+sub handler_methods {
+    my $self = shift;
+    my $handlers = shift;
+    if (!($self->{'handlers'}) || defined $handlers && ref $handlers eq 'HASH') {
+        $self->{'handlers'} = $handlers || \%HANDLERS;
+    }
+    return ($self->{'handlers'});
+}
+
+sub set_handler_helper {
+    my ($self, $name, $sub) = @_;
+    return if !($name && $sub);
+    $self->throw("Passed callback must be a code ref") if $sub && ref $sub eq 'CODE';
+    $self->{'handlers'}->{$name} = $sub;
+}
+
+sub format {
+    my $self = shift;
+    return $self->{format} = shift if @_;
+    return $self->{format};
+}
+
+sub reset_parameters {
+    my ($self) = @_;
+    $self->{parameters} = {};
+}
+
+sub get_parameters {
+    my ($self, $param) = @_;
+    return if !($param);
+    $self->{parameters}->{$param};
+}
+
+sub set_parameters {
+    my ($self, $param, $value) = @_;
+    return if !($param && defined $value);
+    $self->{parameters}->{$param} = $value;
+}
+
+# this needs to be a Bio::SeqFeature::CollectionI that can distinguish
+# between sequence regions; the simplest versions don't
 
 sub feature_collection {
-    
+    my $self = shift;
+    return $self->{feature_collection} = shift if @_;
+    return $self->{feature_collection};
 }
+
+sub file_handle {
+    return shift->{-fh};
+}
+
+sub fasta_mode {
+    my $self = shift;
+    my $mode = $self->get_parameters('mode');
+    return unless $mode;
+    $mode eq 'sequence' || $mode eq 'sequence-region' ? 1 : 0;
+}
+
+sub resolve_references {
+    my $self = shift;
+    my $mode = $self->get_parameters('mode');
+    return unless $mode;
+    $mode eq 'resolve-references' || $mode eq 'sequence' || $mode eq 'sequence-region' ? 1 : 0;
+}
+
+################ HANDLERS ################
+
+# Handler methods are designed so they are called as sub references, not as
+# class or instance based calls. This decouples them from any handler class and
+# allow some customization (for instance, if we need the parent parser to
+# override them). The parser in this case is ultimately responsible for
+# determining what happens to the data.
+
+# Note this just passes in the data w/o munging it beyond recognition
+sub seqfeature {
+    my ($data, $handler) = @_;
+
+    my %sf_data = map {'-'.$_ => $data->{DATA}->{$_}}
+        grep { $data->{DATA}->{$_} ne '.' }
+        sort keys %{$data->{DATA}};
+    
+    if ($data->{DATA}->{attributes}) {
+        delete $sf_data{-attributes};
+        my %tags;
+        
+        # TODO: GFF3-specific split; need to make more general
+        for my $kv (split(/\s*;\s*/, $data->{DATA}->{attributes})) {
+            my ($key, $rest) = split(/[=\s]/, $kv, 2);
+            # add optional/required URI unescaping here
+            my @vals = split(',',$rest);
+            $tags{$key} = \@vals;
+        }
+        $sf_data{-tag} = \%tags;
+    }
+    
+    return Bio::SeqFeature::Generic->new(%sf_data);
+}
+
+sub directives {
+    my ($data, $handler) = @_;
+    my $directive = $data->{DATA}->{type};
+    if ($directive eq 'sequence') {
+        my $fh = $handler->file_handle;
+        $handler->throw("Handler doesn't have a set file handle") if !$fh;
+        return Bio::SeqIO->new(-format => 'fasta',
+                       -fh     => $fh);
+    } elsif ($directive eq 'sequence-region') {
+        # we can make returning a features optional here, but we should do
+        # something with the data in all cases
+        
+        my $sf_data = $data->{DATA};
+        return Bio::SeqFeature::Generic->new(-start     => $sf_data->{start},
+                                             -end       => $sf_data->{end},
+                                             -strand    => 1,
+                                             -seq_id    => $sf_data->{id},
+                                             -primary_tag  => 'region');
+    } else {
+        # defaults for other directives?
+    }
+    return;
+}
+
+sub sequence {
+    my ($data, $handler) = @_;
+    # if we reach this point, the sequence stream has already been read, so
+    # we need to seek back to the start point.  Note if the stream isn't seekable
+    # this will fail spectacularly at this point!
+    my ($start, $len) = @{$data}{qw(START LENGTH)};
+    my $fh = $handler->file_handle;
+    $handler->throw("Handler doesn't have a set file handle") if !$fh;
+    seek($fh, $start, 0);
+    return Bio::SeqIO->new(-format => 'fasta',
+                           -fh     => $fh);
+}
+
+# no op, we just skip these
+sub comment {}
 
 1;
 
@@ -22,15 +195,17 @@ __END__
 
 =head1 NAME
 
-Bio::Factory::FeatureFactory - <One-line description of module's purpose>
+Bio::FeatureIO::Handler::GenericFeatureHandler.pm - <One-line description of module's
+purpose>
 
 =head1 VERSION
 
-This documentation refers to Bio::Factory::FeatureFactory version Bio::Root::Root.
+This documentation refers to Bio::FeatureIO::Handler::GenericFeatureHandler.pm version
+Bio::Root::Root.
 
 =head1 SYNOPSIS
 
-   use Bio::Factory::FeatureFactory;
+   use Bio::FeatureIO::Handler::GenericFeatureHandler.pm;
    # Brief but working code example(s) here showing the most common usage(s)
 
    # This section will be as far as many users bother reading,

@@ -63,7 +63,6 @@ package Bio::FeatureIO::interpro;
 use strict;
 use base qw(Bio::FeatureIO);
 use Bio::SeqFeature::Annotated;
-use Bio::OntologyIO;
 
 use Bio::Annotation::Comment;
 use Bio::Annotation::DBLink;
