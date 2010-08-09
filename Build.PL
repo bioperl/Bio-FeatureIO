@@ -18,7 +18,7 @@ my $build = Module::Build->new(
     create_license       => 1,
     meta_merge           => {
 	                     'resources' => {
-				        'repository' => 'git@github.com:bioperl/bioperl-live.git',
+				         'repository' => 'git@github.com:bioperl/bioperl-live.git',
 	                                    },
 			    },
     auto_features       => {
@@ -32,7 +32,7 @@ my $build = Module::Build->new(
                             network => { }
                            },
     requires             => {
-                             'perl'               => '5.6.1',
+                             'perl'               => '5.10.0',
                              'Bio::Root::Version' => '1.006900',
                              'URI::Escape'        => '0',    # dealing with web resources/Bio::FeatureIO::gff,Bio::FeatureIO::interpro,Bio::DB::Biblio::eutils,Bio::DB::EUtilParameters,Bio::DB::Query::GenBank,Bio::DB::NCBIHelper,Bio::SeqFeature::Annotated',
                              'XML::DOM::XPath'    => '0.13', # parsing interpro features/Bio::FeatureIO::interpro',
