@@ -1,13 +1,13 @@
 package Bio::FeatureIO::gff;
 
-use base qw(Bio::FeatureIO);
-
 use strict;
 use warnings;
-#use URI::Escape;
+use 5.010;
+use base qw(Bio::FeatureIO);
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 use Scalar::Util qw(blessed);
-use Data::Dumper;
+
+#use URI::Escape;
 
 =head1
 
@@ -61,7 +61,44 @@ plugins gbdriver, embldriver, and swissdriver.
 The key issue is defining specifically how bits are bundled and passed along to
 the data handler. the other key point is that the start and length of the
 specific chunk of data passed in is also passed along, primarily if one wanted
-to create lazy feature collections .
+to create lazy feature collections.
+
+The structure of the passed hash references is possibly in flux and shouldn't be
+directly relied on; I plan on standardizing this for consistency.
+
+Maybe something like:
+ 
+ # modes
+ $VAR = {
+    'TYPE'      => 'MODE', # top level type
+    'DATA'      => {
+        'PRIMARY_TYPE'   => 'VERSION',  # second level (possible subtype)
+        # what follows are specific to type/subtype pairings
+        'VERSION'       => 3
+    }
+ };
+ 
+ # features
+ 
+ $VAR = {
+    'TYPE'      => 'FEATURE',
+    'DATA'      => {
+        'PRIMARY_TYPE'   => 'SEQUENCE_FEATURE',
+        'TYPE'          => 'gene',
+        'SOURCE'        => 'GenBank',
+        'START'         => 1,
+        'END'           => 10000,
+        'STRAND'        => -1,
+        'PHASE'         => '.', # can also be left out 
+        'SCORE'         => '.',
+        'ATTRIBUTES'    => {
+            'name'      => ['BRCA1'],
+            'dbxref'    => [...],
+        }
+    }
+ };
+ 
+ # sequence (part or full)
 
 =cut
 
@@ -73,37 +110,40 @@ sub next_dataset {
     GFFLINE:
     while (my $line = $self->_readline) {
         $len += CORE::length($line);
-        if ($line =~ /^\s*$/) {
-            next GFFLINE # blank lines
-        }
-        elsif ($line =~ /^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) {  # comments and directives
-            if (length($1) == 1) {
-                chomp $line;
-                @{$dataset}{qw(MODE DATA)} = ('comment', {DATA => $line});
-            } else {
-                $self->{mode} = 'directive';
-                @{$dataset}{qw(MODE DATA)} = ('directive', $self->directive($2, $3));
+        given ($line) {
+            when (/^\s*$/) {  next GFFLINE  } # blank lines 
+            when (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) {  # comments and directives
+                if (length($1) == 1) {
+                    chomp $line;
+                    @{$dataset}{qw(MODE DATA)} = ('comment', {DATA => $line});
+                } else {
+                    $self->{mode} = 'directive';
+                    @{$dataset}{qw(MODE DATA)} = ('directive', $self->directive($2, $3));
+                }
             }
-        } elsif ($line =~ /^>/) {          # sequence
+            when (/^>/) {          # sequence
                 chomp $line;
                 @{$dataset}{qw(MODE DATA)} = ('sequence', {'sequence-header' =>  $line});
                 $self->{mode} = 'sequence';
-        } elsif ($line =~ /(?:\t[^\t]+){8}/)  {
-            chomp $line;
-            $self->{mode} = $dataset->{MODE} = 'feature';
-            my %feat;
-            @feat{qw(seq_id source primary_tag start end score strand phase attributes)}
-                = split("\t",$line,9);
-            $dataset->{DATA} = \%feat;
-        } else {
-            if ($self->{mode} eq 'sequence') {
+            }
+            when (/(?:\t[^\t]+){8}/)  {
                 chomp $line;
-                @{$dataset}{qw(MODE DATA)} = ('sequence', {sequence => $line});
-            } else {
-                # anything else should be sequence, but there should be some
-                # kind of directive to change the mode or a typical FASTA header
-                # should be found, if not, die
-                $self->throw("Unknown line: $line, parser was in mode ".$self->{mode});
+                $self->{mode} = $dataset->{MODE} = 'feature';
+                my %feat;
+                @feat{qw(seq_id source primary_tag start end score strand phase attributes)}
+                    = split("\t",$line,9);
+                $dataset->{DATA} = \%feat;
+            }
+            default {
+                if ($self->{mode} eq 'sequence') {
+                    chomp $line;
+                    @{$dataset}{qw(MODE DATA)} = ('sequence', {sequence => $line});
+                } else {
+                    # anything else should be sequence, but there should be some
+                    # kind of directive to change the mode or a typical FASTA header
+                    # should be found, if not, die
+                    $self->throw("Unknown line: $line, parser was in mode ".$self->{mode});
+                }
             }
         }
         if ($dataset) {
@@ -119,17 +159,22 @@ sub directive {
     my ($self, $directive, $rest) = @_;
     $rest ||= '';
     my %data;
-    
-    if ($directive eq 'sequence-region') {
-        @data{qw(type id start end)} = ('sequence-region', split(/\s+/, $rest));
-    } elsif ($directive eq 'genome-build') {
-        @data{qw(type source buildname)} = ($directive, split(/\s+/, $rest));
-    } elsif ($directive eq '#') {
-        $data{type} = 'resolve-references';
-    } elsif ($directive eq 'FASTA') {
-        $data{type} = 'sequence';
-    } else {
-        @data{qw(type data)} = ($directive, $rest);
+    given ($directive) {
+        when ('sequence-region') {
+            @data{qw(type id start end)} = ('sequence-region', split(/\s+/, $rest));
+        }
+        when ('genome-build') {
+            @data{qw(type source buildname)} = ($directive, split(/\s+/, $rest));
+        }
+        when ('#') { 
+            $data{type} = 'resolve-references';
+        }
+        when ('FASTA') {
+            $data{type} = 'sequence';
+        }
+        default {
+            @data{qw(type data)} = ($directive, $rest);
+        }
     }
     \%data;
 }
@@ -163,7 +208,6 @@ sub next_feature_group {
     
     while (my $ds = $self->next_dataset) {
         my $object = $self->handler->data_handler($ds);
-        #print STDERR "Mode:".$self->handler->get_parameters('mode')."\n";
         if ($object && $object->isa('Bio::SeqIO')) {
             $self->seqio($object);
             last;
@@ -279,7 +323,8 @@ sub seqio {
 
 =cut
 
-#sub sequence_region {
+sub sequence_region {
+    shift->throw_not_implemented;
 #    my ($self,$k,$v) = @_;
 #    if(defined($k) && defined($v)){
 #        $self->{'sequence_region'}{$k} = $v;
@@ -291,7 +336,7 @@ sub seqio {
 #    else {
 #        return;
 #    }
-#}
+}
 
 
 =head2 so()
@@ -339,18 +384,20 @@ sub validate {
 
 =cut
 
+{
+    my %VALID_VERSION = map {$_ => 1} (1, 2, 2.5, 3);
+
 sub version {
-    shift->throw_not_implemented;
-    #my $self = shift;
-    #my $val = shift;
-    #my %valid = map {$_=>1} (1, 2, 2.5, 3);
-    #if(defined $val && $valid{$val}){
-    #    return $self->{'version'} = $val;
-    #}
-    #elsif(defined($val)){
-    #    $self->throw('invalid version.  valid versions: '.join(' ', sort keys %valid));
-    #}
-    #return $self->{'version'};
+    my $self = shift;
+    my $val = shift;
+    if(defined $val){
+        $self->throw('Invalid GFF version.  Valid versions: '.join(' ', sort keys %VALID_VERSION))
+            if !exists($VALID_VERSION{$val});
+        return $self->{'version'} = $val;
+    }
+    return $self->{'version'};
+}
+
 }
 
 ################################################################################
@@ -804,7 +851,7 @@ __END__
 
 =head1 NAME
 
-Bio::FeatureIO::newgff - read/write GFF feature files
+Bio::FeatureIO::gff - read/write GFF feature files
 
 =head1 SYNOPSIS
 
@@ -859,6 +906,10 @@ the web:
   http://bugzilla.open-bio.org/
 
 =head1 AUTHOR
+
+ Chris Fields, <cjfields at bioperl dot org>
+ 
+Refactored from the original work by:
 
  Allen Day, <allenday@ucla.edu>
 
