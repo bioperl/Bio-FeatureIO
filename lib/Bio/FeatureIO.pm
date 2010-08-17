@@ -2,7 +2,7 @@
 #
 # BioPerl module for Bio::FeatureIO
 #
-# Please direct questions and support issues to <bioperl-l@bioperl.org> 
+# Please direct questions and support issues to <bioperl-l@bioperl.org>
 #
 # Reimplementation by Chris Fields <cjfields at bioperl dot org>
 #
@@ -127,12 +127,12 @@ from a file and prints them out in fasta format with some HTML tags:
   use Bio::FeatureIO;
   use IO::String;
   my $in  = Bio::FeatureIO->new('-file' => "my.gff" ,
-  			    '-format' => 'EMBL');
+                  '-format' => 'EMBL');
   while ( my $f = $in->next_feature() ) {
       # the output handle is reset for every file
       my $stringio = IO::String->new($string);
       my $out = Bio::FeatureIO->new('-fh' => $stringio,
-  			        '-format' => 'gtf');
+                      '-format' => 'gtf');
       # output goes into $string
       $out->write_feature($f);
       # modify $string
@@ -265,7 +265,8 @@ package Bio::FeatureIO;
 
 use strict;
 use warnings;
-
+use Config::Tiny;
+    
 use Symbol;
 
 use base qw(Bio::Root::IO);
@@ -286,36 +287,38 @@ use base qw(Bio::Root::IO);
 my $entry = 0;
 
 sub new {
-    my ($caller,@args) = @_;
+    my ( $caller, @args ) = @_;
     my $class = ref($caller) || $caller;
-  
+
     # or do we want to call SUPER on an object if $caller is an
     # object?
-    if( $class =~ /Bio::FeatureIO::(\S+)/ ) {
-  
-      my ($self) = $class->SUPER::new(@args);	
-      $self->_initialize(@args);
-      return $self;
-  
-    } else {
-  
-      my %param = @args;
-  
-      @param{ map { lc $_ } keys %param } = values %param; # lowercase keys
-      my $format = $param{'-format'} ||
-        $class->_guess_format( $param{-file} || $ARGV[0] );
-      
-      if( ! $format ) {
-        if ($param{-file}) {
-          $format = $class->_guess_format($param{-file});
-        } elsif ($param{-fh}) {
-          $format = $class->_guess_format(undef);
+    if ( $class =~ /Bio::FeatureIO::(\S+)/ ) {
+
+        my ($self) = $class->SUPER::new(@args);
+        $self->_initialize(@args);
+        return $self;
+
+    }
+    else {
+
+        my %param = @args;
+
+        @param{ map { lc $_ } keys %param } = values %param;    # lowercase keys
+        my $format = $param{'-format'}
+          || $class->_guess_format( $param{-file} || $ARGV[0] );
+
+        if ( !$format ) {
+            if ( $param{-file} ) {
+                $format = $class->_guess_format( $param{-file} );
+            }
+            elsif ( $param{-fh} ) {
+                $format = $class->_guess_format(undef);
+            }
         }
-      }
-      $format = "\L$format";	# normalize capitalization to lower case
-      return unless( $class->_load_format_module($format) );
-      return "Bio::FeatureIO::$format"->new(@args);
-  
+        $format = "\L$format";    # normalize capitalization to lower case
+        return unless ( $class->_load_format_module($format) );
+        return "Bio::FeatureIO::$format"->new(@args);
+
     }
 }
 
@@ -353,24 +356,23 @@ sub newFh {
 
 =cut
 
-
 sub fh {
-  my $self = shift;
-  my $class = ref($self) || $self;
-  my $s = Symbol::gensym;
-  tie $$s,$class,$self;
-  return $s;
+    my $self  = shift;
+    my $class = ref($self) || $self;
+    my $s     = Symbol::gensym;
+    tie $$s, $class, $self;
+    return $s;
 }
 
 # _initialize is chained for all FeatureIO classes
 
 sub _initialize {
-    my($self, %arg) = @_;
+    my ( $self, %arg ) = @_;
 
     # flush is initialized by the Root::IO init
 
     # initialize the IO part
-    $self->seq($arg{-seq});
+    $self->seq( $arg{-seq} );
     $self->_initialize_io(%arg);
 }
 
@@ -400,8 +402,8 @@ See L<Bio::Root::RootI>, L<Bio::SeqFeatureI>.
 =cut
 
 sub next_feature {
-   my ($self, $seq) = @_;
-   $self->throw_not_implemented;
+    my ( $self, $seq ) = @_;
+    $self->throw_not_implemented;
 }
 
 =head2 write_feature
@@ -415,7 +417,7 @@ sub next_feature {
 =cut
 
 sub write_feature {
-    my ($self, $seq) = @_;
+    my ( $self, $seq ) = @_;
     $self->throw_not_implemented();
 }
 
@@ -430,11 +432,11 @@ sub write_feature {
 =cut
 
 sub seq {
-  my $self = shift;
-  my $val = shift;
+    my $self = shift;
+    my $val  = shift;
 
-  $self->{'seq'} = $val if defined($val);
-  return $self->{'seq'};
+    $self->{'seq'} = $val if defined($val);
+    return $self->{'seq'};
 }
 
 =head2 _load_format_module
@@ -449,24 +451,21 @@ sub seq {
 =cut
 
 sub _load_format_module {
-    my ($self, $format) = @_;
+    my ( $self, $format ) = @_;
     my $class = ref($self) || $self;
-    my $module = $class."::$format";#"Bio::Feature::" . $format;
+    my $module = $class . "::$format";    #"Bio::Feature::" . $format;
     my $ok;
 
-    eval {
-	$ok = $self->_load_module($module);
-    };
-    if ( $@ ) {
-    print STDERR <<END;
+    eval { $ok = $self->_load_module($module); };
+    if ($@) {
+        print STDERR <<END;
 $self: $format cannot be found
 Exception $@
 For more information about the FeatureIO system please see the FeatureIO docs.
 This includes ways of checking for formats at compile time, not run time
 END
-  ;
-  }
-  return $ok;
+    }
+    return $ok;
 }
 
 =head2 _guess_format
@@ -482,14 +481,14 @@ END
 =cut
 
 sub _guess_format {
-   my $class = shift;
-   return unless $_ = shift;
-   return 'gff'     if /\.gff3?$/i;
-   return 'gff'     if /\.gtf$/i;
-   return 'bed'     if /\.bed$/i;
-   return 'ptt'     if /\.ptt$/i;
+    my $class = shift;
+    return unless $_ = shift;
+    return 'gff' if /\.gff3?$/i;
+    return 'gff' if /\.gtf$/i;
+    return 'bed' if /\.bed$/i;
+    return 'ptt' if /\.ptt$/i;
 
-   return 'gff'; #the default
+    return 'gff';    #the default
 }
 
 sub DESTROY {
@@ -498,22 +497,25 @@ sub DESTROY {
 }
 
 sub TIEHANDLE {
-    my ($class,$val) = @_;
-    return bless {'featio' => $val}, $class;
+    my ( $class, $val ) = @_;
+    return bless { 'featio' => $val }, $class;
 }
 
 sub READLINE {
-  my $self = shift;
-  return $self->{'featio'}->next_feature() unless wantarray;
-  my (@list, $obj);
-  push @list, $obj while $obj = $self->{'featio'}->next_feature();
-  return @list;
+    my $self = shift;
+    return $self->{'featio'}->next_feature() unless wantarray;
+    my ( @list, $obj );
+    push @list, $obj while $obj = $self->{'featio'}->next_feature();
+    return @list;
 }
 
 sub PRINT {
-  my $self = shift;
-  $self->{'featio'}->write_feature(@_);
+    my $self = shift;
+    $self->{'featio'}->write_feature(@_);
 }
 
 1;
+
+__END__
+
 

@@ -16,6 +16,9 @@ my ($io, $f, $s, $fcount, $scount);
 ok($io = Bio::FeatureIO->new(-file => test_input_file('1.bed')));
 
 ok($f = $io->next_feature);
+
+exit;
+
 # Check correct conversion of [0, feature-end+1) bed-coordinates into [1, feature-end]
 # bioperl coordinates.  (here: bed [0, 10))
 is($f->start, 1);

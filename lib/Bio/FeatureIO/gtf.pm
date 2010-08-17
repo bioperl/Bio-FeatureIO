@@ -77,10 +77,10 @@ use strict;
 # Object preamble - inherits from Bio::Root::Root
 
 sub _initialize {
-  my($self,%arg) = @_;
-  $arg{-version} = 2.5;
-  $self->SUPER::_initialize(%arg);
-  return 1;
+    my($self,%arg) = @_;
+    $arg{-version} = 2.5;
+    $self->SUPER::_initialize(%arg);
+    return 1;
 }
 
 1;

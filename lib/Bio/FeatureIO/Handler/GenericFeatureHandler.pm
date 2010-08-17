@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Bio::SeqFeature::Generic;
+use Bio::SeqFeature::Tools::Unflattener;
 use Bio::SeqIO;
 
 my $ct = 0;
@@ -19,6 +20,10 @@ my %HANDLERS = (
     'feature'               => \&seqfeature,
     'sequence'              => \&sequence,
 );
+
+our $ONTOLOGY_STORE;
+our $UNFLATTENER;
+our $ID_HANDLER;
 
 sub new {
     my ($class, @args) = @_;
@@ -35,15 +40,12 @@ sub data_handler {
     
     $self->set_parameters('mode', $nm eq 'directive' ? $data->{DATA}->{type} : $nm);
     
-    # this should handle data on the fly w/o caching; any caching should be 
-    # done in the driver!
     my $method = (exists $self->{'handlers'}->{$nm}) ? ($self->{'handlers'}->{$nm}) :
                 (exists $self->{'handlers'}->{'_DEFAULT_'}) ? ($self->{'handlers'}->{'_DEFAULT_'}) :
                 undef;
     
-    # needs a can check, but $self->can oddly isn't working here...
     if ($method && ref $method eq 'CODE') {
-        return $method->($data, $self);
+        return $self->$method($data);
     } else {
         $self->debug("No handler defined for $nm\n");
         return;
@@ -70,6 +72,11 @@ sub format {
     my $self = shift;
     return $self->{format} = shift if @_;
     return $self->{format};
+}
+
+sub fast {
+    my $self = shift;
+    $self->{fast} || 0;
 }
 
 sub reset_parameters {
@@ -126,7 +133,7 @@ sub resolve_references {
 
 # Note this just passes in the data w/o munging it beyond recognition
 sub seqfeature {
-    my ($data, $handler) = @_;
+    my ($handler, $data) = @_;
 
     my %sf_data = map {'-'.$_ => $data->{DATA}->{$_}}
         grep { $data->{DATA}->{$_} ne '.' }
@@ -150,7 +157,7 @@ sub seqfeature {
 }
 
 sub directives {
-    my ($data, $handler) = @_;
+    my ($handler, $data) = @_;
     my $directive = $data->{DATA}->{type};
     if ($directive eq 'sequence') {
         my $fh = $handler->file_handle;
@@ -158,7 +165,7 @@ sub directives {
         return Bio::SeqIO->new(-format => 'fasta',
                        -fh     => $fh);
     } elsif ($directive eq 'sequence-region') {
-        # we can make returning a features optional here, but we should do
+        # we can make returning a feature optional here, but we should do
         # something with the data in all cases
         
         my $sf_data = $data->{DATA};
@@ -174,7 +181,7 @@ sub directives {
 }
 
 sub sequence {
-    my ($data, $handler) = @_;
+    my ($handler, $data) = @_;
     # if we reach this point, the sequence stream has already been read, so
     # we need to seek back to the start point.  Note if the stream isn't seekable
     # this will fail spectacularly at this point!

@@ -6,31 +6,31 @@ use 5.010;
 use base qw(Bio::FeatureIO);
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 use Scalar::Util qw(blessed);
+use Config::Any;
 
-#use URI::Escape;
-
-=head1
-
-Need to come up with a controlled vocabulary for parceling out this data. This
-should be in lines with a defined schema, such as Chado or BioSQL. Should
-possibly refactor the SeqIO drivers similarly.
-
-=cut
+my %CONFIG;
 
 sub _initialize {
     my($self, @args) = @_;
   
     $self->SUPER::_initialize(@args);
     
-    my ($handler, $handler_args, $format) =
-        $self->_rearrange([qw(HANDLER HANDLER_ARGS FORMAT)] , @args);
+    my ($handler, $handler_args, $format, $conf) =
+        $self->_rearrange([qw(HANDLER HANDLER_ARGS FORMAT CONF)] , @args);
     $format ||= 'GFF3';
-    $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(-verbose => $self->verbose,
-                                                                     -fh      => $self->_fh);
+    $handler_args ||= {};
+    (ref($handler_args) eq 'HASH') ||
+        $self->throw("-handler_args must be a hash reference");
+    
+    $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(
+        -verbose => $self->verbose,
+        -fh      => $self->_fh,
+        -format  => $format,
+        %$handler_args);
     if (!ref($handler) || !$handler->isa('Bio::HandlerBaseI')) {
         $self->throw('Passed object must be a Bio::HandlerBaseI');
     }
-    $handler->format($format);
+    
     $self->_init_stream();
     $self->handler($handler);
 }
@@ -44,6 +44,7 @@ sub next_feature {
         # leave it to the handler to decide when a feature is returned
         while (my $object = $self->handler->data_handler($ds)) {
             return $object if $object->isa('Bio::SeqFeatureI');
+            # when a SeqIO is returned, the features are done
             if ($object->isa('Bio::SeqIO')) {
                 $self->seqio($object);
                 return;
@@ -51,56 +52,6 @@ sub next_feature {
         }
     }
 }
-
-=head1
-
-Data is passed as hash-refs, similar to a SAX-based data stream, but containing
-chunks of related information.  A version of this is implemented in Bio::SeqIO
-plugins gbdriver, embldriver, and swissdriver.
-
-The key issue is defining specifically how bits are bundled and passed along to
-the data handler. the other key point is that the start and length of the
-specific chunk of data passed in is also passed along, primarily if one wanted
-to create lazy feature collections.
-
-The structure of the passed hash references is possibly in flux and shouldn't be
-directly relied on; I plan on standardizing this for consistency.
-
-Maybe something like:
- 
- # modes
- $VAR = {
-    'TYPE'      => 'MODE', # top level type
-    'DATA'      => {
-        'PRIMARY_TYPE'   => 'VERSION',  # second level (possible subtype)
-        # what follows are specific to type/subtype pairings
-        'VERSION'       => 3
-    }
- };
- 
- # features
- 
- $VAR = {
-    'TYPE'      => 'FEATURE',
-    'DATA'      => {
-        'PRIMARY_TYPE'   => 'SEQUENCE_FEATURE',
-        'TYPE'          => 'gene',
-        'SOURCE'        => 'GenBank',
-        'START'         => 1,
-        'END'           => 10000,
-        'STRAND'        => -1,
-        'PHASE'         => '.', # can also be left out 
-        'SCORE'         => '.',
-        'ATTRIBUTES'    => {
-            'name'      => ['BRCA1'],
-            'dbxref'    => [...],
-        }
-    }
- };
- 
- # sequence (part or full)
-
-=cut
 
 sub next_dataset {
     my $self = shift;
@@ -257,25 +208,24 @@ sub next_seq() {
 
 =cut
 
-#sub write_feature {
-#    my($self,$feature) = @_;
-#    if (!$feature) {
-#        $self->throw("gff.pm cannot write_feature unless you give a feature to write.\n");
-#    }
-#    $self->throw("only Bio::SeqFeature::Annotated objects are writeable") unless $feature->isa('Bio::SeqFeature::Annotated');
-#  
-#    if($self->version == 1){
-#        return $self->_write_feature_1($feature);
-#    } elsif($self->version == 2){
-#        return $self->_write_feature_2($feature);
-#    } elsif($self->version == 2.5){
-#        return $self->_write_feature_25($feature);
-#    } elsif($self->version == 3){
-#        return $self->_write_feature_3($feature);
-#    } else {
-#        $self->throw(sprintf("don't know how to write GFF version %s",$self->version));
-#    }
-#}
+sub write_feature {
+    my($self,$feature) = @_;
+    if (!$feature) {
+        $self->throw("gff.pm cannot write_feature unless you give a feature to write.\n");
+    }
+  
+    if($self->version == 1){
+        return $self->_write_feature_1($feature);
+    } elsif($self->version == 2){
+        return $self->_write_feature_2($feature);
+    } elsif($self->version == 2.5){
+        return $self->_write_feature_25($feature);
+    } elsif($self->version == 3){
+        return $self->_write_feature_3($feature);
+    } else {
+        $self->throw(sprintf("don't know how to write GFF version %s",$self->version));
+    }
+}
 
 ################################################################################
 
@@ -847,8 +797,6 @@ write a feature in GFF v3 format.
 
 __END__
 
-=pod
-
 =head1 NAME
 
 Bio::FeatureIO::gff - read/write GFF feature files
@@ -866,6 +814,52 @@ Bio::FeatureIO::gff - read/write GFF feature files
 
 =head1 DESCRIPTION
 
+This is a general purpose GFF parser.  The default is GFF version 3.
+
+Data is passed as hash-refs, similar to a SAX-based data stream, but containing
+chunks of related information.  A version of this is implemented in Bio::SeqIO
+plugins gbdriver, embldriver, and swissdriver.
+
+The key issue is defining specifically how bits are bundled and passed along to
+the data handler. the other key point is that the start and length of the
+specific chunk of data passed in is also passed along, primarily if one wanted
+to create lazy feature collections.
+
+The structure of the passed hash references is possibly in flux and shouldn't be
+directly relied on; I plan on standardizing this for consistency.
+
+Maybe something like:
+ 
+ # modes
+ $VAR = {
+    'TYPE'      => 'MODE', # top level type
+    'DATA'      => {
+        'PRIMARY_TYPE'   => 'VERSION',  # second level (possible subtype)
+        # what follows are specific to type/subtype pairings
+        'VERSION'       => 3
+    }
+ };
+ 
+ # features
+ 
+ $VAR = {
+    'TYPE'      => 'FEATURE',
+    'DATA'      => {
+        'PRIMARY_TYPE'   => 'SEQUENCE_FEATURE',
+        'TYPE'          => 'gene',
+        'SOURCE'        => 'GenBank',
+        'START'         => 1,
+        'END'           => 10000,
+        'STRAND'        => -1,
+        'PHASE'         => '.', # can also be left out 
+        'SCORE'         => '.',
+        'ATTRIBUTES'    => {
+            'name'      => ['BRCA1'],
+            'dbxref'    => [...],
+        }
+    }
+ };
+ 
  Currently implemented:
 
  version         read?   write?
@@ -924,16 +918,12 @@ Refactored from the original work by:
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
-=cut
-
 =head2 next_feature()
 
  Usage   : my $feature = $featureio->next_feature();
  Function: reads a feature record from a GFF stream and returns it as an object.
  Returns : a Bio::SeqFeature::Annotated object
  Args    : N/A
-
-=cut
 
 =head2 next_feature_group
 
@@ -954,8 +944,6 @@ Internal methods are usually preceded with a _
            }
  Returns : an array of Bio::SeqFeature::Annotated objects
  Args    : none
-
-=cut
 
 =head2 next_seq()
 
