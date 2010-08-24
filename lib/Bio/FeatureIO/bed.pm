@@ -177,11 +177,6 @@ sub next_feature {
         # leave it to the handler to decide when a feature is returned
         while (my $object = $self->handler->data_handler($ds)) {
             return $object if $object->isa('Bio::SeqFeatureI');
-            # when a SeqIO is returned, the features are done
-            if ($object->isa('Bio::SeqIO')) {
-                $self->seqio($object);
-                return;
-            }
         }
     }
 }
@@ -189,41 +184,24 @@ sub next_feature {
 sub next_dataset {
     my $self = shift;
     my $dataset;
+    my $mode = 'feature';
     while (my $line = $self->_readline) {
         next if $line =~ /^\s*$/;
         chomp $line;
-        my ( $seq_id, $start, $end, $name, $score, $strand,
-                $tstart, $tend, $itemrgb, $blockct, $blocksizes, $blockst) =
-          split(/\s+/, $line);
-        $strand ||= '+';
-        $start += 1;
-        print STDERR join(',', $seq_id, $start, $end)."\n";
-        #my @blocks = split(',',$blockst);
-        #
-        #unless ( looks_like_number($start) && looks_like_number($end) ) {
-        #    # skip what is probably a header line
-        #    next;
-        #}
+        if ($line !~ /\t/) {
+            $mode = 'track_definition';
+            @{$dataset}{qw(MODE DATA)} = ($mode, {DATA => $line});
+        } else {
+            my %feats;
+            @feats{qw(seq_id start end name score strand thickstart thickend itemrgb blockct
+                   blocksizes blockstart)} = split(/\s+/, $line, 12);
+            $feats{strand} ||= '+';
+            $feats{start} += 1;
+            
+            @{$dataset}{qw(MODE DATA)} = ($mode, \%feats);
+        }
+        return $dataset;
     }
-    # start is 0 based, need it 1-based;
-    # end is one beyond the feature ends and thus already 1-based
-    #my $feature = Bio::SeqFeature::Annotated->new(
-    #    -start => ++$start,
-    #    -end   => $end,
-    #    $score ? ( -score => $score ) : (),
-    #    $strand ? ( -strand => $strand eq '+' ? 1 : -1 ) : ()
-    #);
-    #
-    #$feature->seq_id($seq_id);
-    #if ($name) {
-    #    my $sv = Bio::Annotation::SimpleValue->new(
-    #        -tagname => 'Name',
-    #        -value   => $name
-    #    );
-    #    $feature->annotation->add_Annotation($sv);
-    #}
-
-    #return $feature;
 }
 
 sub write_feature {

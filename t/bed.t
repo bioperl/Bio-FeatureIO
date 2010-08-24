@@ -6,6 +6,7 @@ use warnings;
 use lib './inc';
 use Bio::Root::Test;
 use Bio::FeatureIO;
+use Data::Dumper;
 
 my ($io, $f, $s, $fcount, $scount);
 
@@ -13,24 +14,23 @@ my ($io, $f, $s, $fcount, $scount);
 #
 # use FeatureIO::bed to read a bed file
 #
-ok($io = Bio::FeatureIO->new(-file => test_input_file('1.bed')));
+
+ok($io = Bio::FeatureIO->new(-file => test_input_file('hg19_sample.bed')));
 
 ok($f = $io->next_feature);
 
-exit;
-
-# Check correct conversion of [0, feature-end+1) bed-coordinates into [1, feature-end]
-# bioperl coordinates.  (here: bed [0, 10))
-is($f->start, 1);
-is($f->end, 10);
-
-# Check field values.
-my @tags = $f->get_tag_values("Name");
-is(scalar(@tags), 1);
-is($tags[0], "test-coordinates-1");
-
-is($f->seq_id, "chr1");
-
+## Check correct conversion of [0, feature-end+1) bed-coordinates into [1, feature-end]
+## bioperl coordinates.  (here: bed [0, 10))
+#is($f->start, 1);
+#is($f->end, 10);
+#
+## Check field values.
+#my @tags = $f->get_tag_values("Name");
+#is(scalar(@tags), 1);
+#is($tags[0], "test-coordinates-1");
+#
+#is($f->seq_id, "chr1");
+#
 done_testing();
 
 exit;
