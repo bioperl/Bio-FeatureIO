@@ -172,7 +172,6 @@ sub description {
 
 sub next_feature {
     my $self = shift;
-    DATASET:
     while (my $ds = $self->next_dataset) {
         # leave it to the handler to decide when a feature is returned
         while (my $object = $self->handler->data_handler($ds)) {
@@ -183,23 +182,23 @@ sub next_feature {
 
 sub next_dataset {
     my $self = shift;
-    my $dataset;
     my $mode = 'feature';
     while (my $line = $self->_readline) {
+        my $dataset;
         next if $line =~ /^\s*$/;
         chomp $line;
         if ($line !~ /\t/) {
             $mode = 'track_definition';
             @{$dataset}{qw(MODE DATA)} = ($mode, {DATA => $line});
         } else {
-            my %feats;
-            @feats{qw(seq_id start end display_name score strand thickstart
-                   thickend itemrgb blockct blocksizes blockstart)} =
+            my (%feat, %tags);
+            (@feat{qw(-seq_id -start -end -display_name -score -strand)},
+             @tags{qw(thickstart thickend itemrgb blockct blocksizes blockstart)}) =
                     split(/\s+/, $line, 12);
-            $feats{strand} ||= '.'; # unknown is probably a good default
-            $feats{start} += 1;     # convert to 1-based coordinates
-            
-            @{$dataset}{qw(MODE DATA)} = ($mode, \%feats);
+            $feat{-strand} ||= '.'; # unknown is probably a good default
+            $feat{-start} += 1;     # convert to 1-based coordinates
+            $feat{-tag} = \%tags;
+            @{$dataset}{qw(MODE DATA)} = ($mode, \%feat);
         }
         return $dataset;
     }

@@ -51,9 +51,17 @@ sub next_dataset {
             when (/(?:\t[^\t]+){8}/)  {
                 chomp $line;
                 $self->{mode} = $dataset->{MODE} = 'feature';
-                my %feat;
-                @feat{qw(seq_id source primary_tag start end score strand phase attributes)}
-                    = split("\t",$line,9);
+                my (%feat, %tags, $attstr);
+                (@feat{qw(-seq_id -source -primary_tag -start -end -score -strand -phase)},
+                 $attstr) = map {$_ ne '.' ? $_ : undef } split("\t",$line,9);
+
+                # add optional/required URI unescaping here
+                for my $kv (split(/\s*;\s*/, $attstr)) {
+                    my ($key, $rest) = split(/[=\s]/, $kv, 2);
+                    my @vals = split(',',$rest);
+                    $tags{$key} = \@vals;
+                }
+                $feat{-tag} = \%tags;
                 $dataset->{DATA} = \%feat;
             }
             default {

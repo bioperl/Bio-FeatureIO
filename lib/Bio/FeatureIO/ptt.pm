@@ -119,20 +119,21 @@ use 5.010;
 use strict;
 use base qw(Bio::FeatureIO);
 use Bio::SeqFeature::Generic;
+use Data::Dumper;
 
 # map tab-separated column number to field name
-our %NAME_OF = (
-    0 => 'Location',
-    1 => 'Strand',
-    2 => 'Length',
-    3 => 'PID',
-    4 => 'Gene',
-    5 => 'Synonym',
-    6 => 'Code',
-    7 => 'COG',
-    8 => 'Product',
-);
-our $NUM_COL = 9;
+#our %NAME_OF = (
+#    0 => 'Location',
+#    1 => 'Strand',
+#    2 => 'Length',
+#    3 => 'PID',
+#    4 => 'Gene',
+#    5 => 'Synonym',
+#    6 => 'Code',
+#    7 => 'COG',
+#    8 => 'Product',
+#);
+#our $NUM_COL = 9;
 
 =head2 _initialize
 
@@ -177,7 +178,6 @@ our $NUM_COL = 9;
 
 sub next_feature {
     my $self = shift;
-    DATASET:
     while (my $ds = $self->next_dataset) {
         # leave it to the handler to decide when a feature is returned
         while (my $object = $self->handler->data_handler($ds)) {
@@ -189,27 +189,24 @@ sub next_feature {
 sub next_dataset {
     my $self = shift;
     my $dataset;
-    while ($_ = $self->_readline) {
-        chomp;
-        if (/\t/) {
-            my @col = split;
-            @col == $NUM_COL or $self->throw("Too many columns for PTT line");
-            
-            $col[0] =~ m/(\d+)\.\.(\d+)/ or $self->throw("Invalid location (column 1)");
-            my $feat = Bio::SeqFeature::Generic->new(
-                -start   => $1,
-                -end     => $2,
-                -primary => 'CDS'
-            );
-            $col[1] =~ m/^([+-])$/ or $self->throw("Invalid strand (column 2)");
-            $feat->strand( $1 eq '+' ? +1 : -1 );
-            for my $i ( 2 .. $NUM_COL - 1 ) {
-                $feat->add_tag_value( $NAME_OF{$i}, $col[$i] ) if $col[$i] ne '-';
+    while (defined($_ = $self->_readline)) {
+        if (/^(\d+)..(\d+)\t/) {
+            chomp;
+            my (%feat, %tags);
+            my @data = split("\t",$_);
+            (@feat{qw(-location_string -strand -length -primary_id
+                  -display_name)}, @tags{qw(Alias code cog product)}) = @data;
+            for my $k (keys %tags) {
+                delete $tags{$k} if $tags{$k} eq '-';
             }
-            return $feat;
+            @feat{qw(-start -end)} = ($1, $2);
+            $feat{-tag} = \%tags;
+            @{$dataset}{qw(MODE DATA)} = ('feature', \%feat);
         } else {
-            
+            chomp;
+            @{$dataset}{qw(MODE DATA)} = ('header', $_);
         }
+        return $dataset;
     }
 }
 
@@ -241,8 +238,9 @@ sub write_feature {
 
 sub description {
     my $self = shift;
-    return $self->{'description'} = shift if @_;
-    return $self->{'description'};
+    $self->throw_not_implemented;
+    # the above will just call the handler, which can handle persistent data
+    # between calls
 }
 
 =head2 protein_count
@@ -258,8 +256,9 @@ sub description {
 
 sub protein_count {
     my $self = shift;
-    return $self->{'protein_count'} = shift if @_;
-    return $self->{'protein_count'};
+    $self->throw_not_implemented;
+    # the above will just call the handler, which can handle persistent data
+    # between calls
 }
 
 1;

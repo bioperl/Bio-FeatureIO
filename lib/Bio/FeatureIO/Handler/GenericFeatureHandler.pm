@@ -131,32 +131,9 @@ sub resolve_references {
 # Note this just passes in the data w/o munging it beyond recognition
 sub seqfeature {
     my ($handler, $data) = @_;
-    
-    # TODO: create a feature factory
-    # TODO: disambiguate the use of display_name and attribute tag 'Name' for
-    #       GFF3, which is inconsistent
-    
-    # Optionally type check ontology here
-    
-    my %sf_data = map {'-'.$_ => $data->{DATA}->{$_}}
-        grep { $data->{DATA}->{$_} ne '.' }
-        sort keys %{$data->{DATA}};
-    
-    if ($data->{DATA}->{attributes}) {
-        delete $sf_data{-attributes};
-        my %tags;
-        
-        # TODO: GFF3-specific split; need to make more general
-        for my $kv (split(/\s*;\s*/, $data->{DATA}->{attributes})) {
-            my ($key, $rest) = split(/[=\s]/, $kv, 2);
-            # add optional/required URI unescaping here
-            my @vals = split(',',$rest);
-            $tags{$key} = \@vals;
-        }
-        $sf_data{-tag} = \%tags;
-    }
-    
-    return Bio::SeqFeature::Generic->new(%sf_data);
+    # TODO: Create a feature factory
+    # TODO: Optionally type check ontology here
+    return Bio::SeqFeature::Generic->new(%{$data->{DATA}});
 }
 
 sub directives {
@@ -170,7 +147,6 @@ sub directives {
     } elsif ($directive eq 'sequence-region') {
         # we can make returning a feature optional here, but we should do
         # something with the data in all cases
-        
         my $sf_data = $data->{DATA};
         return Bio::SeqFeature::Generic->new(-start     => $sf_data->{start},
                                              -end       => $sf_data->{end},
