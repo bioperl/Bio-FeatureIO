@@ -21,15 +21,33 @@ ok($f = $io->next_feature);
 
 # Check correct conversion of [0, feature-end+1) bed-coordinates into [1, feature-end]
 # bioperl coordinates.  (here: bed [0, 10))
-#is($f->start, 1);
-#is($f->end, 10);
-#
-## Check field values.
-#my @tags = $f->get_tag_values("Name");
-#is(scalar(@tags), 1);
-#is($tags[0], "test-coordinates-1");
-#
-#is($f->seq_id, "chr1");
+is($f->start, 23281095);
+is($f->end, 23283550);
+is($f->strand, 1);
+
+# Check field values.
+is($f->display_name, "BC043238");
+is($f->seq_id, "chr2");
+
+#TODO: blocks into subfeatures
+
+ok($f = $io->next_feature);
+is($f->start, 23348659);
+is($f->end, 23349587);
+is($f->strand, -1);
+
+# Check field values.
+is($f->display_name, "AK024624");
+is($f->seq_id, "chr2");
+
+my $ct;
+
+# get rest of features
+while ($io->next_feature) {
+    $ct++;
+}
+
+is($ct, 6);
 
 done_testing();
 

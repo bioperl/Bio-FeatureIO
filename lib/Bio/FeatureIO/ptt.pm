@@ -1,3 +1,4 @@
+
 =pod
 
 =head1 NAME
@@ -110,26 +111,26 @@ Internal methods are usually preceded with a _
 
 =cut
 
-
 # Let the code begin...
 
 package Bio::FeatureIO::ptt;
 
+use 5.010;
 use strict;
 use base qw(Bio::FeatureIO);
 use Bio::SeqFeature::Generic;
 
 # map tab-separated column number to field name
 our %NAME_OF = (
-  0 => 'Location',
-  1 => 'Strand',
-  2 => 'Length', 
-  3 => 'PID', 
-  4 => 'Gene',  
-  5 => 'Synonym',
-  6 => 'Code',  
-  7 => 'COG', 
-  8 => 'Product',
+    0 => 'Location',
+    1 => 'Strand',
+    2 => 'Length',
+    3 => 'PID',
+    4 => 'Gene',
+    5 => 'Synonym',
+    6 => 'Code',
+    7 => 'COG',
+    8 => 'Product',
 );
 our $NUM_COL = 9;
 
@@ -141,24 +142,27 @@ our $NUM_COL = 9;
 
 =cut
 
-sub _initialize {
-  my($self,%arg) = @_;
-
-  $self->SUPER::_initialize(%arg);
-
-  if ($self->mode eq 'r') {
-    # Line 1
-    my $desc = $self->_readline();
-    chomp $desc;
-    $self->description($desc);
-    # Line 2
-    my $line = $self->_readline();
-    $line =~ m/^(\d+) proteins/ or $self->throw("Invalid protein count");
-    $self->protein_count($1);
-    # Line 3
-    $self->_readline();
-  }
-}
+#sub _initialize {
+#    my ( $self, %arg ) = @_;
+#
+#    $self->SUPER::_initialize(%arg);
+#
+#    if ( $self->mode eq 'r' ) {
+#
+#        # Line 1
+#        my $desc = $self->_readline();
+#        chomp $desc;
+#        $self->description($desc);
+#
+#        # Line 2
+#        my $line = $self->_readline();
+#        $line =~ m/^(\d+) proteins/ or $self->throw("Invalid protein count");
+#        $self->protein_count($1);
+#
+#        # Line 3
+#        $self->_readline();
+#    }
+#}
 
 =head2 next_feature
 
@@ -172,22 +176,41 @@ sub _initialize {
 =cut
 
 sub next_feature {
-  my $self = shift;
-  $self->mode eq 'r' || return; # returns if can't read next_feature when we're in write mode
-  
-  my $line = $self->_readline() or return; # returns if end of file, no more features?
-  chomp $line;
-  my @col = split m/\t/, $line;
-  @col==$NUM_COL or $self->throw("Too many columns for PTT line");
+    my $self = shift;
+    DATASET:
+    while (my $ds = $self->next_dataset) {
+        # leave it to the handler to decide when a feature is returned
+        while (my $object = $self->handler->data_handler($ds)) {
+            return $object if $object->isa('Bio::SeqFeatureI');
+        }
+    }
+}
 
-  $col[0] =~ m/(\d+)\.\.(\d+)/ or $self->throw("Invalid location (column 1)");
-  my $feat = Bio::SeqFeature::Generic->new(-start=>$1, -end=>$2, -primary=>'CDS');
-  $col[1] =~ m/^([+-])$/ or $self->throw("Invalid strand (column 2)");
-  $feat->strand($1 eq '+' ? +1 : -1);
-  for my $i (2 .. $NUM_COL-1) {
-    $feat->add_tag_value($NAME_OF{$i}, $col[$i]) if $col[$i] ne '-';
-  }
-  return $feat;
+sub next_dataset {
+    my $self = shift;
+    my $dataset;
+    while ($_ = $self->_readline) {
+        chomp;
+        if (/\t/) {
+            my @col = split;
+            @col == $NUM_COL or $self->throw("Too many columns for PTT line");
+            
+            $col[0] =~ m/(\d+)\.\.(\d+)/ or $self->throw("Invalid location (column 1)");
+            my $feat = Bio::SeqFeature::Generic->new(
+                -start   => $1,
+                -end     => $2,
+                -primary => 'CDS'
+            );
+            $col[1] =~ m/^([+-])$/ or $self->throw("Invalid strand (column 2)");
+            $feat->strand( $1 eq '+' ? +1 : -1 );
+            for my $i ( 2 .. $NUM_COL - 1 ) {
+                $feat->add_tag_value( $NAME_OF{$i}, $col[$i] ) if $col[$i] ne '-';
+            }
+            return $feat;
+        } else {
+            
+        }
+    }
 }
 
 =head2 write_feature (NOT IMPLEMENTED)
@@ -202,7 +225,7 @@ sub next_feature {
 =cut
 
 sub write_feature {
-  shift->throw_not_implemented;
+    shift->throw_not_implemented;
 }
 
 =head2 description
@@ -217,9 +240,9 @@ sub write_feature {
 =cut
 
 sub description {
-  my $self = shift;
-  return $self->{'description'} = shift if @_;
-  return $self->{'description'};
+    my $self = shift;
+    return $self->{'description'} = shift if @_;
+    return $self->{'description'};
 }
 
 =head2 protein_count
@@ -234,9 +257,9 @@ sub description {
 =cut
 
 sub protein_count {
-  my $self = shift;
-  return $self->{'protein_count'} = shift if @_;
-  return $self->{'protein_count'};
+    my $self = shift;
+    return $self->{'protein_count'} = shift if @_;
+    return $self->{'protein_count'};
 }
 
 1;

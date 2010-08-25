@@ -193,10 +193,11 @@ sub next_dataset {
             @{$dataset}{qw(MODE DATA)} = ($mode, {DATA => $line});
         } else {
             my %feats;
-            @feats{qw(seq_id start end name score strand thickstart thickend itemrgb blockct
-                   blocksizes blockstart)} = split(/\s+/, $line, 12);
-            $feats{strand} ||= '+';
-            $feats{start} += 1;
+            @feats{qw(seq_id start end display_name score strand thickstart
+                   thickend itemrgb blockct blocksizes blockstart)} =
+                    split(/\s+/, $line, 12);
+            $feats{strand} ||= '.'; # unknown is probably a good default
+            $feats{start} += 1;     # convert to 1-based coordinates
             
             @{$dataset}{qw(MODE DATA)} = ($mode, \%feats);
         }
@@ -206,6 +207,7 @@ sub next_dataset {
 
 sub write_feature {
     my ( $self, $feature ) = @_;
+    $self->throw_not_implemented;
     $self->throw("only Bio::SeqFeature::Annotated objects are writeable")
       unless $feature->isa('Bio::SeqFeature::Annotated');
 

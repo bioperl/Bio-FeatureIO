@@ -15,7 +15,13 @@ my %GFF3_RESERVED_TAGS = map {$_ => $ct++ }
     Derives_from Note Dbxref Ontology_term Index);
     
 my %HANDLERS = (
+    # GFF3-specific
     'directive'             => \&directives,
+    
+    # BED-specific
+    'track_definition'      => \&track_definition,
+    
+    # generic
     'comment'               => \&comment,
     'feature'               => \&seqfeature,
     'sequence'              => \&sequence,
@@ -96,15 +102,6 @@ sub set_parameters {
     $self->{parameters}->{$param} = $value;
 }
 
-# this needs to be a Bio::SeqFeature::CollectionI that can distinguish
-# between sequence regions; the simplest versions don't
-
-sub feature_collection {
-    my $self = shift;
-    return $self->{feature_collection} = shift if @_;
-    return $self->{feature_collection};
-}
-
 sub file_handle {
     return shift->{-fh};
 }
@@ -134,7 +131,13 @@ sub resolve_references {
 # Note this just passes in the data w/o munging it beyond recognition
 sub seqfeature {
     my ($handler, $data) = @_;
-
+    
+    # TODO: create a feature factory
+    # TODO: disambiguate the use of display_name and attribute tag 'Name' for
+    #       GFF3, which is inconsistent
+    
+    # Optionally type check ontology here
+    
     my %sf_data = map {'-'.$_ => $data->{DATA}->{$_}}
         grep { $data->{DATA}->{$_} ne '.' }
         sort keys %{$data->{DATA}};
@@ -195,6 +198,8 @@ sub sequence {
 
 # no op, we just skip these
 sub comment {}
+
+sub track_definition {}
 
 1;
 
