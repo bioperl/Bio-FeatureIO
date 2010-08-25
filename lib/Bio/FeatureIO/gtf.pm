@@ -18,7 +18,7 @@ Bio::FeatureIO::gtf - read write features in GTF format
 
 =head1 SYNOPSIS
 
-L<Bio::FeatureIO::gff>
+Please see L<Bio::FeatureIO::gff>
 
 =head1 DESCRIPTION
 
