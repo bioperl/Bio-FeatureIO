@@ -265,8 +265,9 @@ package Bio::FeatureIO;
 
 use strict;
 use warnings;
-use Config::Tiny;
-    
+use Scalar::Util qw(blessed);
+use Bio::FeatureIO::Handler::GenericFeatureHandler;
+use Config::Any;
 use Symbol;
 
 use base qw(Bio::Root::IO);
@@ -322,6 +323,33 @@ sub new {
     }
 }
 
+# _initialize is chained for all FeatureIO classes
+
+sub _initialize {
+    my ( $self, @args) = @_;
+
+    # flush is initialized by the Root::IO init
+
+    # initialize the IO part
+    $self->_initialize_io(@args);
+
+    my ($handler, $handler_args, $format, $conf, $seq) =
+        $self->_rearrange([qw(HANDLER HANDLER_ARGS FORMAT CONF SEQ)] , @args);
+    $format ||= 'GFF3';
+    $handler_args ||= {};
+    (ref($handler_args) eq 'HASH') ||
+        $self->throw("-handler_args must be a hash reference");    
+    $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(
+        -verbose => $self->verbose,
+        -fh      => $self->_fh,
+        -format  => $format,
+        %$handler_args);
+    $seq    && $self->seq( $seq);
+
+    $self->_init_stream();
+    $self->handler($handler);        
+}
+
 =head2 newFh
 
  Title   : newFh
@@ -362,18 +390,6 @@ sub fh {
     my $s     = Symbol::gensym;
     tie $$s, $class, $self;
     return $s;
-}
-
-# _initialize is chained for all FeatureIO classes
-
-sub _initialize {
-    my ( $self, %arg ) = @_;
-
-    # flush is initialized by the Root::IO init
-
-    # initialize the IO part
-    $self->seq( $arg{-seq} );
-    $self->_initialize_io(%arg);
 }
 
 =head2 next_feature
@@ -439,6 +455,17 @@ sub seq {
     return $self->{'seq'};
 }
 
+sub handler {
+    my ($self, $handler) = @_;
+    if ($handler) {
+        $self->throw("Handler must be a Bio::HandlerBaseI") unless
+        blessed($handler) && $handler->isa('Bio::HandlerBaseI');
+        $self->{handler} = $handler;
+    }
+    return $self->{handler} if $self->{handler};
+    $self->throw("Handler not set");
+}
+
 =head2 _load_format_module
 
  Title   : _load_format_module
@@ -489,6 +516,14 @@ sub _guess_format {
     return 'ptt' if /\.ptt$/i;
 
     return 'gff';    #the default
+}
+
+sub _init_stream {
+    my $self = shift;
+    my $fh = $self->_fh;
+    my $start = tell $fh;
+    @{$self}{qw(stream_start stream_type)} =
+        ($start >= 0) ?  ($start, 'seekable') : (0, 'string')
 }
 
 sub DESTROY {

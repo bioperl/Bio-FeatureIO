@@ -19,8 +19,8 @@ ok($io = Bio::FeatureIO->new(-file => test_input_file('hg19_sample.bed')));
 
 ok($f = $io->next_feature);
 
-## Check correct conversion of [0, feature-end+1) bed-coordinates into [1, feature-end]
-## bioperl coordinates.  (here: bed [0, 10))
+# Check correct conversion of [0, feature-end+1) bed-coordinates into [1, feature-end]
+# bioperl coordinates.  (here: bed [0, 10))
 #is($f->start, 1);
 #is($f->end, 10);
 #
@@ -30,7 +30,7 @@ ok($f = $io->next_feature);
 #is($tags[0], "test-coordinates-1");
 #
 #is($f->seq_id, "chr1");
-#
+
 done_testing();
 
 exit;

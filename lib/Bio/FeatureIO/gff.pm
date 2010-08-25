@@ -5,35 +5,6 @@ use warnings;
 use 5.010;
 use base qw(Bio::FeatureIO);
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
-use Scalar::Util qw(blessed);
-use Config::Any;
-
-my %CONFIG;
-
-sub _initialize {
-    my($self, @args) = @_;
-  
-    $self->SUPER::_initialize(@args);
-    
-    my ($handler, $handler_args, $format, $conf) =
-        $self->_rearrange([qw(HANDLER HANDLER_ARGS FORMAT CONF)] , @args);
-    $format ||= 'GFF3';
-    $handler_args ||= {};
-    (ref($handler_args) eq 'HASH') ||
-        $self->throw("-handler_args must be a hash reference");
-    
-    $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(
-        -verbose => $self->verbose,
-        -fh      => $self->_fh,
-        -format  => $format,
-        %$handler_args);
-    if (!ref($handler) || !$handler->isa('Bio::HandlerBaseI')) {
-        $self->throw('Passed object must be a Bio::HandlerBaseI');
-    }
-    
-    $self->_init_stream();
-    $self->handler($handler);
-}
 
 # raw feature stream; returned features are as-is, may be modified post-return
 sub next_feature {
@@ -128,25 +99,6 @@ sub directive {
         }
     }
     \%data;
-}
-
-sub handler {
-    my ($self, $handler) = @_;
-    if ($handler) {
-        $self->throw("Handler must be a Bio::HandlerBaseI") unless
-        blessed($handler) && $handler->isa('Bio::HandlerBaseI');
-        $self->{handler} = $handler;
-    }
-    return $self->{handler} if $self->{handler};
-    $self->throw("Handler not set");
-}
-
-sub _init_stream {
-    my $self = shift;
-    my $fh = $self->_fh;
-    my $start = tell $fh;
-    @{$self}{qw(stream_start stream_type)} =
-        ($start >= 0) ?  ($start, 'seekable') : (0, 'string')
 }
 
 sub next_feature_group {
