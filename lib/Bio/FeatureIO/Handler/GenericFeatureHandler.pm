@@ -25,6 +25,9 @@ my %HANDLERS = (
     'comment'               => \&comment,
     'feature'               => \&seqfeature,
     'sequence'              => \&sequence,
+    
+    # defaults (none for now)
+    #'default'               => \&default
 );
 
 our $ONTOLOGY_STORE;
@@ -131,8 +134,11 @@ sub resolve_references {
 # Note this just passes in the data w/o munging it beyond recognition
 sub seqfeature {
     my ($handler, $data) = @_;
+    
     # TODO: Create a feature factory
-    # TODO: Optionally type check ontology here
+    # TODO: Optionally type check ontology here, preferably prior to expending
+    #       unnecessary energy/time on creating objects (Robert Bradbury rules)
+    
     return Bio::SeqFeature::Generic->new(%{$data->{DATA}});
 }
 
@@ -161,9 +167,15 @@ sub directives {
 
 sub sequence {
     my ($handler, $data) = @_;
-    # if we reach this point, the sequence stream has already been read, so
-    # we need to seek back to the start point.  Note if the stream isn't seekable
-    # this will fail spectacularly at this point!
+    
+    # So, at this point we have to decide whether to indicate this is the start
+    # of a sequence stream (i.e. grab the file handle and create a SeqIO), or
+    # allow further sequence data to be passed in. We punt and do the easy thing
+    # for now, but we should allow flexibility here, so maybe something
+    # configurable?
+    
+    # Note this relies on having knowledge of the specific place in the stream
+    
     my ($start, $len) = @{$data}{qw(START LENGTH)};
     my $fh = $handler->file_handle;
     $handler->throw("Handler doesn't have a set file handle") if !$fh;
@@ -172,7 +184,7 @@ sub sequence {
                            -fh     => $fh);
 }
 
-# no op, we just skip these
+# no ops, we just skip these
 sub comment {}
 
 sub track_definition {}
