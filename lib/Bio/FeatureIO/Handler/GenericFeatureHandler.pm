@@ -35,13 +35,6 @@ our $ID_HANDLER;
 sub new {
     my ($class, %args) = @_;
     my $self = bless \%args, $class;
-    # Not a huge worry for now, but something to think about: we don't want to
-    # allow too much latitude, it obfuscates the design. We either want users to
-    # subclass this class or create their own methods, not both.
-    
-    # this initiates the handler methods for the data handler to parcel
-    # data to; maybe it should 
-    #$self->handler_methods();
     return $self;
 }
 
@@ -89,11 +82,15 @@ sub get_parameter {
     $self->{parameters}{$param};
 }
 
+*get_parameters = \&get_parameter;
+
 sub set_parameter {
     my ($self, $param, $value) = @_;
     return if !($param && defined $value);
     $self->{parameters}{$param} = $value;
 }
+
+*set_parameters = \&set_parameter;
 
 sub get_parameter_names {
     my $self = shift;
@@ -116,14 +113,15 @@ sub file_handle {
 sub fasta_mode {
     my $self = shift;
     return unless $self->{current_state}; # init
-    my ($mode, $dir_type) = ($self->{current_state}{MODE} || '', $self->{current_state}{DATA}{type} || '');
+    my ($mode, $dir_type) = ($self->{current_state}{MODE} || '',
+                             $self->{current_state}{DATA}{type} || '');
     $mode eq 'sequence' || $dir_type eq 'sequence';
 }
 
 sub resolve_references {
     my $self = shift;
-    my ($mode, $dir_type) = ($self->{current_state}{MODE} || '', $self->{current_state}{DATA}{type} || '');
-    $dir_type eq 'resolve-references' || $mode eq 'sequence' || ($dir_type eq 'sequence-region');
+    my $dir_type = $self->{current_state}{DATA}{type} || '';
+    $dir_type eq 'resolve-references' || $self->fasta_mode;
 }
 
 sub feature_factory {
@@ -140,7 +138,7 @@ sub feature_factory {
 sub feature_class {
     my $self = shift;
     return $self->{-feature_class} = shift if @_;
-    $self->{-feature_class};
+    $self->{-feature_class} || 'Bio::SeqFeature::Generic';
 }
 
 ################ HANDLERS ################
@@ -171,11 +169,11 @@ sub directives {
         # something with the data in all cases
         my $sf_data = $data->{DATA};
         return $handler->feature_factory->create_object(
-                                            -start     => $sf_data->{start},
-                                             -end       => $sf_data->{end},
-                                             -strand    => 1,
-                                             -seq_id    => $sf_data->{id},
-                                             -primary_tag  => 'region');
+            -start     => $sf_data->{start},
+            -end       => $sf_data->{end},
+            -strand    => 1,
+            -seq_id    => $sf_data->{id},
+            -primary_tag  => 'region');
     } else {
         # defaults for other directives?
     }

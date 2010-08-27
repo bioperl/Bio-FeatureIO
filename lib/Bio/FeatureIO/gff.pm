@@ -112,8 +112,7 @@ sub directive {
 
 sub next_feature_group {
     my $self = shift;
-    return if $self->fasta_mode;
-    $self->{sf_cache} ||= [];
+    return if $self->fasta_mode; # end of features in the file
     my %seen_ids;
     my @all_feats;
     my @toplevel_feats;
