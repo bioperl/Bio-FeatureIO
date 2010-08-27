@@ -54,7 +54,8 @@ sub next_dataset {
                 my (%feat, %tags, $attstr);
                 (@feat{qw(-seq_id -source -primary_tag -start -end -score -strand -phase)},
                  $attstr) = map {$_ ne '.' ? $_ : undef } split("\t",$line,9);
-
+                
+                # This is the critical GTF/GFF2/GFF3 step
                 # add optional/required URI unescaping here
                 for my $kv (split(/\s*;\s*/, $attstr)) {
                     my ($key, $rest) = split(/[=\s]/, $kv, 2);
@@ -173,17 +174,24 @@ sub write_feature {
     if (!$feature) {
         $self->throw("gff.pm cannot write_feature unless you give a feature to write.\n");
     }
-  
-    if($self->version == 1){
-        return $self->_write_feature_1($feature);
-    } elsif($self->version == 2){
-        return $self->_write_feature_2($feature);
-    } elsif($self->version == 2.5){
-        return $self->_write_feature_25($feature);
-    } elsif($self->version == 3){
-        return $self->_write_feature_3($feature);
-    } else {
-        $self->throw(sprintf("don't know how to write GFF version %s",$self->version));
+    
+    # maybe use a dispatch table?  
+    given ($self->version) {
+        when (1) {
+            return $self->_write_feature_1($feature);
+        }
+        when (2) {
+            return $self->_write_feature_2($feature);
+        }
+        when (2.5) {
+            return $self->_write_feature_25($feature);
+        }
+        when (3) {
+            return $self->_write_feature_3($feature);
+        }
+        default {
+            $self->throw(sprintf("don't know how to write GFF version %s",$self->version));
+        }
     }
 }
 
@@ -279,7 +287,7 @@ sub so {
 =cut
 
 sub validate {
-    shift->throw_not_implemented;    
+    shift->throw_not_implemented;
     #my($self,$val) = @_;
     #$self->{'validate'} = $val if defined($val);
     #return $self->{'validate'};
@@ -786,13 +794,15 @@ specific chunk of data passed in is also passed along, primarily if one wanted
 to create lazy feature collections.
 
 The structure of the passed hash references is possibly in flux and shouldn't be
-directly relied on; I plan on standardizing this for consistency.
+directly relied on; I plan on standardizing this for consistency. One
+possibility is to standardize on BioPerl constructor attributes where possible,
+which (in general) tends to mirror many natural data types such as features.
 
 Maybe something like:
  
- # modes
+ # GFF directives
  $VAR = {
-    'TYPE'      => 'MODE', # top level type
+    'MODE'      => 'directive', # top level type
     'DATA'      => {
         'PRIMARY_TYPE'   => 'VERSION',  # second level (possible subtype)
         # what follows are specific to type/subtype pairings

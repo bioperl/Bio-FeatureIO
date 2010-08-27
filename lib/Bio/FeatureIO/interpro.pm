@@ -87,80 +87,80 @@ sub _initialize {
 }
 
 sub next_feature {
-  my $self =shift;
-  my $buf;    #line buffer
-  my $ok = 0; #true if there is another <protein/> record in stream
-  my $record; #holds the record to be parsed and returned.
-
-  #try to dump buffer from last record before moving on to next record
-  my $f = $self->_shift_feature_buffer();
-  if($f){
-    return $f;
-  }
-
-  while(my $buf = $self->_readline()){
-    $ok = 1 if $buf =~ m!<protein!;
-    $record .= $buf;
-    last if $buf =~ m!</protein>!;
-  }
-  return unless $ok;
-
-  my $dom = $self->xml_parser->parse($record);
-
-
-  my ($pNode) = $dom->findnodes('/protein');
-
-  my @iNodes = $pNode->findnodes('/protein/interpro');
-
-  foreach my $iNode (@iNodes){
-    my @cNodes = $iNode->findnodes('classification');
-    my @mNodes = $iNode->findnodes('match');
-
-    #we don't handle these
-    #my @nNodes = $iNode->findnodes('contains');
-    #my @fNodes = $iNode->findnodes('found_in');
-
-    foreach my $mNode (@mNodes){
-      my @lNodes = $mNode->findnodes('location');
-      foreach my $lNode (@lNodes){
-        my $feature = Bio::SeqFeature::Annotated->new(
-                                                      -start  => $lNode->getAttribute('start'),
-                                                      -end    => $lNode->getAttribute('end'),
-                                                      -score  => $lNode->getAttribute('score'),
-#                                                      -seq_id => $pNode->getAttribute('id'),
-                                                     );
-        $feature->seq_id->value($pNode->getAttribute('id'));
-
-#warn $pNode->getAttribute('id');
-
-        $feature->source( $lNode->getAttribute('evidence') );
-
-        my $t = Bio::Annotation::OntologyTerm->new(-identifier => 'SO:0000417', -name => 'polypeptide_domain');
-        $feature->add_Annotation('type',$t);
-
-        my $c = Bio::Annotation::Comment->new(-tagname => 'comment', -text => $iNode->getAttribute('name'));
-        $feature->add_Annotation($c);
-
-        my $d = Bio::Annotation::DBLink->new();
-        $d->database($mNode->getAttribute('dbname'));
-        $d->primary_id($mNode->getAttribute('id'));
-        $d->optional_id($mNode->getAttribute('name'));
-        $feature->annotation->add_Annotation('dblink',$d);
-
-        my $s = Bio::Annotation::SimpleValue->new(-tagname => 'status', -value => $lNode->getAttribute('status'));
-        $feature->annotation->add_Annotation($s);
-
-        foreach my $cNode (@cNodes){
-          my $o = Bio::Annotation::OntologyTerm->new(-identifier => $cNode->getAttribute('id'));
-          $feature->annotation->add_Annotation('ontology_term',$o);
+    my $self = shift;
+    my $buf;    #line buffer
+    my $ok = 0; #true if there is another <protein/> record in stream
+    my $record; #holds the record to be parsed and returned.
+  
+    #try to dump buffer from last record before moving on to next record
+    my $f = $self->_shift_feature_buffer();
+    if($f){
+      return $f;
+    }
+  
+    while(my $buf = $self->_readline()){
+      $ok = 1 if $buf =~ m!<protein!;
+      $record .= $buf;
+      last if $buf =~ m!</protein>!;
+    }
+    return unless $ok;
+  
+    my $dom = $self->xml_parser->parse($record);
+  
+  
+    my ($pNode) = $dom->findnodes('/protein');
+  
+    my @iNodes = $pNode->findnodes('/protein/interpro');
+  
+    foreach my $iNode (@iNodes){
+      my @cNodes = $iNode->findnodes('classification');
+      my @mNodes = $iNode->findnodes('match');
+  
+      #we don't handle these
+      #my @nNodes = $iNode->findnodes('contains');
+      #my @fNodes = $iNode->findnodes('found_in');
+  
+      foreach my $mNode (@mNodes){
+        my @lNodes = $mNode->findnodes('location');
+        foreach my $lNode (@lNodes){
+          my $feature = Bio::SeqFeature::Annotated->new(
+                                                        -start  => $lNode->getAttribute('start'),
+                                                        -end    => $lNode->getAttribute('end'),
+                                                        -score  => $lNode->getAttribute('score'),
+  #                                                      -seq_id => $pNode->getAttribute('id'),
+                                                       );
+          $feature->seq_id->value($pNode->getAttribute('id'));
+  
+  #warn $pNode->getAttribute('id');
+  
+          $feature->source( $lNode->getAttribute('evidence') );
+  
+          my $t = Bio::Annotation::OntologyTerm->new(-identifier => 'SO:0000417', -name => 'polypeptide_domain');
+          $feature->add_Annotation('type',$t);
+  
+          my $c = Bio::Annotation::Comment->new(-tagname => 'comment', -text => $iNode->getAttribute('name'));
+          $feature->add_Annotation($c);
+  
+          my $d = Bio::Annotation::DBLink->new();
+          $d->database($mNode->getAttribute('dbname'));
+          $d->primary_id($mNode->getAttribute('id'));
+          $d->optional_id($mNode->getAttribute('name'));
+          $feature->annotation->add_Annotation('dblink',$d);
+  
+          my $s = Bio::Annotation::SimpleValue->new(-tagname => 'status', -value => $lNode->getAttribute('status'));
+          $feature->annotation->add_Annotation($s);
+  
+          foreach my $cNode (@cNodes){
+            my $o = Bio::Annotation::OntologyTerm->new(-identifier => $cNode->getAttribute('id'));
+            $feature->annotation->add_Annotation('ontology_term',$o);
+          }
+  
+          $self->_push_feature_buffer($feature);
         }
-
-        $self->_push_feature_buffer($feature);
       }
     }
-  }
-
-  return $self->_shift_feature_buffer;
+  
+    return $self->_shift_feature_buffer;
 }
 
 =head2 _push_feature_buffer()

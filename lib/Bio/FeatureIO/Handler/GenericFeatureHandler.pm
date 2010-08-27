@@ -5,8 +5,7 @@ use base qw(Bio::Root::Root Bio::HandlerBaseI);
 use strict;
 use warnings;
 use Data::Dumper;
-use Bio::SeqFeature::Generic;
-use Bio::SeqFeature::Tools::Unflattener;
+use Bio::Factory::ObjectFactory;
 use Bio::SeqIO;
 
 my $ct = 0;
@@ -35,10 +34,14 @@ our $UNFLATTENER;
 our $ID_HANDLER;
 
 sub new {
-    my ($class, @args) = @_;
-    my $self = $class->SUPER::new(@args);
-    $self = {@args};
-    bless $self,$class;
+    my ($class, %args) = @_;
+    my $self = bless \%args, $class;
+    # Not a huge worry for now, but something to think about: we don't want to
+    # allow too much latitude, it obfuscates the design. We either want users to
+    # subclass this class or create their own methods, not both.
+    
+    # this initiates the handler methods for the data handler to parcel
+    # data to; maybe it should 
     $self->handler_methods();
     return $self;
 }
@@ -46,11 +49,11 @@ sub new {
 sub data_handler {
     my ($self, $data) = @_;
     my $nm = $data->{MODE} || $self->throw("No type tag defined!\n".Dumper($data));
-    
-    $self->set_parameters('mode', $nm eq 'directive' ? $data->{DATA}->{type} : $nm);
-    
-    my $method = (exists $self->{'handlers'}->{$nm}) ? ($self->{'handlers'}->{$nm}) :
-                (exists $self->{'handlers'}->{'_DEFAULT_'}) ? ($self->{'handlers'}->{'_DEFAULT_'}) :
+
+    $self->{current_state} = $data;
+
+    my $method = (exists $HANDLERS{$nm}) ? ($HANDLERS{$nm}) :
+                (exists $HANDLERS{'_DEFAULT_'}) ? ($HANDLERS{'_DEFAULT_'}) :
                 undef;
     
     if ($method && ref $method eq 'CODE') {
@@ -70,17 +73,10 @@ sub handler_methods {
     return ($self->{'handlers'});
 }
 
-sub set_handler_helper {
-    my ($self, $name, $sub) = @_;
-    return if !($name && $sub);
-    $self->throw("Passed callback must be a code ref") if $sub && ref $sub eq 'CODE';
-    $self->{'handlers'}->{$name} = $sub;
-}
-
 sub format {
     my $self = shift;
-    return $self->{format} = shift if @_;
-    return $self->{format};
+    return $self->{-format} = shift if @_;
+    return $self->{-format};
 }
 
 sub fast {
@@ -88,39 +84,65 @@ sub fast {
     $self->{fast} || 0;
 }
 
+sub get_parameter {
+    my ($self, $param) = @_;
+    return if !($param);
+    $self->{parameters}{$param};
+}
+
+sub set_parameter {
+    my ($self, $param, $value) = @_;
+    return if !($param && defined $value);
+    $self->{parameters}{$param} = $value;
+}
+
+sub get_parameter_names {
+    my $self = shift;
+    return sort keys %{$self->{parameters}} if $self->{parameters};
+    return ();
+}
+
 sub reset_parameters {
-    my ($self) = @_;
+    my ($self, $param) = @_;
     $self->{parameters} = {};
 }
 
-sub get_parameters {
-    my ($self, $param) = @_;
-    return if !($param);
-    $self->{parameters}->{$param};
-}
-
-sub set_parameters {
-    my ($self, $param, $value) = @_;
-    return if !($param && defined $value);
-    $self->{parameters}->{$param} = $value;
-}
-
 sub file_handle {
-    return shift->{-fh};
+    my ($self, $fh) = @_;
+    return $self->{-fh} = $fh if $fh;
+    return $self->{-fh};
 }
 
+# GFF3-specific convenience method
 sub fasta_mode {
     my $self = shift;
-    my $mode = $self->get_parameters('mode');
-    return unless $mode;
-    $mode eq 'sequence' || $mode eq 'sequence-region' ? 1 : 0;
+    return unless $self->{current_state}; # init
+    my ($mode, $dir_type) = ($self->{current_state}{MODE} || '', $self->{current_state}{DATA}{type} || '');
+    $mode eq 'sequence' || ($dir_type eq 'sequence-region');
 }
 
+# GFF3-specific
 sub resolve_references {
     my $self = shift;
-    my $mode = $self->get_parameters('mode');
-    return unless $mode;
-    $mode eq 'resolve-references' || $mode eq 'sequence' || $mode eq 'sequence-region' ? 1 : 0;
+    my ($mode, $dir_type) = ($self->{current_state}{MODE} || '', $self->{current_state}{DATA}{type} || '');
+    ($dir_type eq 'resolve-references') || $mode eq 'sequence' || ($dir_type eq 'sequence-region');
+}
+
+sub feature_factory {
+    my ($self, $factory) = @_;
+    if ($factory && $factory->isa('Bio::Factory::ObjectFactoryI')) {
+        $self->{feature_factory} = $factory;
+    }
+    $self->{feature_factory} ||= Bio::Factory::ObjectFactory->new(
+                            -type       => 'Bio::SeqFeature::Generic',
+                            -interface  => 'Bio::SeqFeatureI'
+    );
+}
+
+sub feature_class {
+    my $self = shift;
+    return $self->{-feature_class} = shift if @_;
+    $self->{-feature_class};
 }
 
 ################ HANDLERS ################
@@ -131,15 +153,11 @@ sub resolve_references {
 # override them). The parser in this case is ultimately responsible for
 # determining what happens to the data.
 
-# Note this just passes in the data w/o munging it beyond recognition
 sub seqfeature {
     my ($handler, $data) = @_;
-    
-    # TODO: Create a feature factory
     # TODO: Optionally type check ontology here, preferably prior to expending
     #       unnecessary energy/time on creating objects (Robert Bradbury rules)
-    
-    return Bio::SeqFeature::Generic->new(%{$data->{DATA}});
+    return $handler->feature_factory->create_object(%{$data->{DATA}});
 }
 
 sub directives {
@@ -154,7 +172,8 @@ sub directives {
         # we can make returning a feature optional here, but we should do
         # something with the data in all cases
         my $sf_data = $data->{DATA};
-        return Bio::SeqFeature::Generic->new(-start     => $sf_data->{start},
+        return $handler->feature_factory->create_object(
+                                            -start     => $sf_data->{start},
                                              -end       => $sf_data->{end},
                                              -strand    => 1,
                                              -seq_id    => $sf_data->{id},
