@@ -113,19 +113,18 @@ sub file_handle {
     return $self->{-fh};
 }
 
-# GFF3-specific convenience method
+# GFF3-specific convenience methods
 sub fasta_mode {
     my $self = shift;
     return unless $self->{current_state}; # init
     my ($mode, $dir_type) = ($self->{current_state}{MODE} || '', $self->{current_state}{DATA}{type} || '');
-    $mode eq 'sequence' || ($dir_type eq 'sequence-region');
+    $mode eq 'sequence' || $dir_type eq 'sequence';
 }
 
-# GFF3-specific
 sub resolve_references {
     my $self = shift;
     my ($mode, $dir_type) = ($self->{current_state}{MODE} || '', $self->{current_state}{DATA}{type} || '');
-    ($dir_type eq 'resolve-references') || $mode eq 'sequence' || ($dir_type eq 'sequence-region');
+    $dir_type eq 'resolve-references' || $mode eq 'sequence' || ($dir_type eq 'sequence-region');
 }
 
 sub feature_factory {
