@@ -4,7 +4,6 @@ use base qw(Bio::Root::Root Bio::HandlerBaseI);
 
 use strict;
 use warnings;
-use Data::Dumper;
 use Bio::Factory::ObjectFactory;
 use Bio::SeqIO;
 
@@ -42,7 +41,7 @@ sub new {
     
     # this initiates the handler methods for the data handler to parcel
     # data to; maybe it should 
-    $self->handler_methods();
+    #$self->handler_methods();
     return $self;
 }
 
@@ -81,7 +80,7 @@ sub format {
 
 sub fast {
     my $self = shift;
-    $self->{fast} || 0;
+    $self->{-fast} || 0;
 }
 
 sub get_parameter {

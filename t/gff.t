@@ -6,7 +6,6 @@ use warnings;
 use lib './inc';
 use Bio::Root::Test;
 use Bio::FeatureIO;
-use Data::Dumper;
 
 # this is mainly GFF3-specific, GFF2/GTF to be added
 
@@ -85,8 +84,6 @@ while($f = $io->next_feature()) {
     }
 }
 is($fcount, 15);
-
-print STDERR Dumper $io->handler->{current_state};
 
 #then try to read sequences again.  should still be undef
 while($s = $io->next_seq()){
