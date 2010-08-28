@@ -6,6 +6,11 @@ use 5.010;
 use base qw(Bio::FeatureIO);
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 
+my $URI_CODE = ';=%&,\t\n\r\x00-\x1f';
+my $GFF_SPLIT = "\t";
+my $ATTRIBUTE_SPLIT = "=";
+my $ATTRIBUTE_CONVERT = \&gff3_convert;
+
 # raw feature stream; returned features are as-is, may be modified post-return
 sub next_feature {
     my $self = shift;
@@ -53,13 +58,12 @@ sub next_dataset {
                 $self->{mode} = $dataset->{MODE} = 'feature';
                 my (%feat, %tags, $attstr);
                 (@feat{qw(-seq_id -source -primary_tag -start -end -score -strand -phase)},
-                 $attstr) = map {$_ ne '.' ? $_ : undef } split("\t",$line,9);
+                 $attstr) = map {$_ ne '.' ? $_ : undef } split($GFF_SPLIT,$line,9);
                 
                 # This is the critical GTF/GFF2/GFF3 step
-                # add optional/required URI unescaping here
                 for my $kv (split(/\s*;\s*/, $attstr)) {
-                    my ($key, $rest) = split(/[=\s]/, $kv, 2);
-                    my @vals = split(',',$rest);
+                    my ($key, $rest) = split(/[=\s+]/, $kv, 2);
+                    my @vals = map { $ATTRIBUTE_CONVERT->($_) } split(',',$rest);
                     $tags{$key} = \@vals;
                 }
                 $feat{-tag} = \%tags;
@@ -313,6 +317,12 @@ sub version {
         return $self->{'version'} = $val;
     }
     return $self->{'version'};
+}
+
+sub gff3_convert {
+    my $val = $_[0];
+    $val =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/ego;
+    $val;
 }
 
 }
