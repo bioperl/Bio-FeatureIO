@@ -6,10 +6,20 @@ use 5.010;
 use base qw(Bio::FeatureIO);
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 
-my $URI_CODE = ';=%&,\t\n\r\x00-\x1f';
+# Defaults (GFF3); may make these instance-based
+my $URI_ENCODE = ';=%&,\t\n\r\x00-\x1f';
 my $GFF_SPLIT = "\t";
 my $ATTRIBUTE_SPLIT = "=";
 my $ATTRIBUTE_CONVERT = \&gff3_convert;
+
+sub _initialize {
+    my ($self, @args) = @_;
+    $self->SUPER::_initialize(@args);
+    my ($version) = $self->_rearrange([qw(VERSION)], @args);
+    $version ||= 3;
+    $self->version($version);
+    # set globals using config if present, then defaults based on version
+}
 
 # raw feature stream; returned features are as-is, may be modified post-return
 sub next_feature {
@@ -39,30 +49,33 @@ sub next_dataset {
         $len += CORE::length($line);
         given ($line) {
             when (/^\s*$/) {  next GFFLINE  } # blank lines 
-            when (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) {  # comments and directives
+            when (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) { # comments and directives
                 if (length($1) == 1) {
                     chomp $line;
                     @{$dataset}{qw(MODE DATA)} = ('comment', {DATA => $line});
                 } else {
                     $self->{mode} = 'directive';
-                    @{$dataset}{qw(MODE DATA)} = ('directive', $self->directive($2, $3));
+                    @{$dataset}{qw(MODE DATA)} =
+                        ('directive', $self->directive($2, $3));
                 }
             }
             when (/^>/) {          # sequence
                 chomp $line;
-                @{$dataset}{qw(MODE DATA)} = ('sequence', {'sequence-header' =>  $line});
+                @{$dataset}{qw(MODE DATA)} =
+                    ('sequence', {'sequence-header' =>  $line});
                 $self->{mode} = 'sequence';
             }
             when (/(?:\t[^\t]+){8}/)  {
                 chomp $line;
                 $self->{mode} = $dataset->{MODE} = 'feature';
                 my (%feat, %tags, $attstr);
-                (@feat{qw(-seq_id -source -primary_tag -start -end -score -strand -phase)},
-                 $attstr) = map {$_ ne '.' ? $_ : undef } split($GFF_SPLIT,$line,9);
+                # validate here?
+                (@feat{qw(-seq_id -source -primary_tag -start -end
+                       -score -strand -phase)}, $attstr) =
+                    map {$_ ne '.' ? $_ : undef } split($GFF_SPLIT,$line);
                 
-                # This is the critical GTF/GFF2/GFF3 step
                 for my $kv (split(/\s*;\s*/, $attstr)) {
-                    my ($key, $rest) = split(/[=\s+]/, $kv, 2);
+                    my ($key, $rest) = split("$ATTRIBUTE_SPLIT", $kv, 2);
                     my @vals = map { $ATTRIBUTE_CONVERT->($_) } split(',',$rest);
                     $tags{$key} = \@vals;
                 }
@@ -72,12 +85,14 @@ sub next_dataset {
             default {
                 if ($self->{mode} eq 'sequence') {
                     chomp $line;
-                    @{$dataset}{qw(MODE DATA)} = ('sequence', {sequence => $line});
+                    @{$dataset}{qw(MODE DATA)} =
+                        ('sequence', {sequence => $line});
                 } else {
                     # anything else should be sequence, but there should be some
-                    # kind of directive to change the mode or a typical FASTA header
-                    # should be found, if not, die
-                    $self->throw("Unknown line: $line, parser was in mode ".$self->{mode});
+                    # kind of directive to change the mode or a typical FASTA
+                    # header should be found; if not, die
+                    $self->throw("Unknown line: $line, parser was in mode ".
+                                 $self->{mode});
                 }
             }
         }
@@ -95,8 +110,10 @@ sub directive {
     $rest ||= '';
     my %data;
     given ($directive) {
+        # validate here?
         when ('sequence-region') {
-            @data{qw(type id start end)} = ('sequence-region', split(/\s+/, $rest));
+            @data{qw(type id start end)} =
+                ('sequence-region', split(/\s+/, $rest));
         }
         when ('genome-build') {
             @data{qw(type source buildname)} = ($directive, split(/\s+/, $rest));
@@ -164,9 +181,9 @@ sub next_seq() {
 =head2 write_feature()
 
  Usage   : $featureio->write_feature( Bio::SeqFeature::Annotated->new(...) );
- Function: writes a feature in GFF format.  the GFF version used is governed by the
-           '-version' argument passed to Bio::FeatureIO->new(), and defaults to GFF
-           version 3.
+ Function: writes a feature in GFF format.  the GFF version used is
+           governed by the '-version' argument passed to Bio::FeatureIO->new(),
+           and defaults to GFF version 3.
  Returns : ###FIXME
  Args    : a Bio::SeqFeature::Annotated object.
 
@@ -174,6 +191,7 @@ sub next_seq() {
 
 sub write_feature {
     my($self,$feature) = @_;
+    $self->throw_not_implemented;
     if (!$feature) {
         $self->throw("gff.pm cannot write_feature unless you give a feature to write.\n");
     }
@@ -314,7 +332,8 @@ sub version {
     if(defined $val){
         $self->throw('Invalid GFF version.  Valid versions: '.join(' ', sort keys %VALID_VERSION))
             if !exists($VALID_VERSION{$val});
-        return $self->{'version'} = $val;
+        $self->{'version'} = $val;
+        #$self->set_config();
     }
     return $self->{'version'};
 }
