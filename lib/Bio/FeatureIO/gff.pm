@@ -73,7 +73,13 @@ sub next_dataset {
                 (@feat{qw(-seq_id -source -primary_tag -start -end
                        -score -strand)}, (my $phase), $attstr) =
                     map {$_ ne '.' ? $_ : undef } split($GFF_SPLIT,$line);
-                $tags{phase} = defined $phase ? [$phase] : [];
+                if( defined $phase ) {
+                    $tags{phase} = [$phase];
+                    $feat{-phase} = $phase;
+                } else {
+                    $tags{phase} = [];
+                }
+
                 for my $kv (split(/\s*;\s*/, $attstr)) {
                     my ($key, $rest) = split("$ATTRIBUTE_SPLIT", $kv, 2);
                     my @vals = map { $ATTRIBUTE_CONVERT->($_) } split(',',$rest);
