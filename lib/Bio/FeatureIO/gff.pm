@@ -71,9 +71,9 @@ sub next_dataset {
                 my (%feat, %tags, $attstr);
                 # validate here?
                 (@feat{qw(-seq_id -source -primary_tag -start -end
-                       -score -strand -phase)}, $attstr) =
+                       -score -strand)}, (my $phase), $attstr) =
                     map {$_ ne '.' ? $_ : undef } split($GFF_SPLIT,$line);
-                
+                $tags{phase} = [$phase];
                 for my $kv (split(/\s*;\s*/, $attstr)) {
                     my ($key, $rest) = split("$ATTRIBUTE_SPLIT", $kv, 2);
                     my @vals = map { $ATTRIBUTE_CONVERT->($_) } split(',',$rest);

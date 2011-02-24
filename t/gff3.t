@@ -59,7 +59,7 @@ while($f = $io->next_feature()) {
         is($f->primary_id, 'A00469');
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, undef);
         is($f->start, 62467934);
         is($f->end, 62469545);
         is($f->strand, -1);
@@ -68,16 +68,26 @@ while($f = $io->next_feature()) {
         is($f->primary_id, undef);  # no ID attribute
         is($f->seq_id, 'chr9');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, undef);
         is($f->start, 90517946);
         is($f->end, 90518841);
         is($f->strand, -1);
+    } elsif ($fcount == 11) {
+        is($f->primary_tag, 'CDS');
+        is($f->primary_id, undef);  # no ID attribute
+        is($f->seq_id, 'chr9');
+        is($f->source_tag, 'UCSC');
+        is($f->score, undef);
+        is($f->start, 90518842);
+        is($f->end, 90519167);
+        is($f->strand, -1);
+        is_deeply([$f->get_tag_values('phase')],[1]);
     } elsif ($fcount == 15) {
         is($f->primary_tag, 'match');
         is($f->primary_id, 'blastresult.1');
         is($f->seq_id, 'chr9');
         is($f->source_tag, 'BLASTN');
-        is($f->score, '0.0');        
+        is($f->score, '0.0');
         is($f->start, 90518850);
         is($f->end, 90521248);
         is($f->strand, 1);
