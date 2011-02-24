@@ -48,5 +48,15 @@ while($f = $io->next_feature()){
 }
 is($fcount, 55);
 
+$fcount = 0;
+
+ok( $io = Bio::FeatureIO->new(-format => 'gtf',
+                              -file => test_input_file('mm9_sample_ensembl.gtf') ) );
+
+while($f = $io->next_feature()){
+    $fcount++;
+}
+is($fcount, 81);
+
 done_testing();
 

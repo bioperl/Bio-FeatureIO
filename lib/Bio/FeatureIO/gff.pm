@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use 5.010;
 use base qw(Bio::FeatureIO);
+use URI::Escape;
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 
 # Defaults (GFF3); may make these instance-based
@@ -82,7 +83,8 @@ sub next_dataset {
 
                 for my $kv (split(/\s*;\s*/, $attstr)) {
                     my ($key, $rest) = split("$ATTRIBUTE_SPLIT", $kv, 2);
-                    my @vals = map { $ATTRIBUTE_CONVERT->($_) } split(',',$rest);
+                    my @vals = $rest ? map { $ATTRIBUTE_CONVERT->($_) } split(',',$rest)
+                        : ();
                     $tags{$key} = \@vals;
                 }
                 $feat{-tag} = \%tags;
