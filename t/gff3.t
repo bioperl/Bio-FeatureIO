@@ -63,6 +63,7 @@ while($f = $io->next_feature()) {
         is($f->start, 62467934);
         is($f->end, 62469545);
         is($f->strand, -1);
+        is_deeply([$f->get_tag_values('phase')],[]);
     } elsif ($fcount == 10) {
         is($f->primary_tag, 'three_prime_UTR');
         is($f->primary_id, undef);  # no ID attribute
@@ -72,6 +73,7 @@ while($f = $io->next_feature()) {
         is($f->start, 90517946);
         is($f->end, 90518841);
         is($f->strand, -1);
+        is_deeply([$f->get_tag_values('phase')],[]);
     } elsif ($fcount == 11) {
         is($f->primary_tag, 'CDS');
         is($f->primary_id, undef);  # no ID attribute
@@ -91,6 +93,7 @@ while($f = $io->next_feature()) {
         is($f->start, 90518850);
         is($f->end, 90521248);
         is($f->strand, 1);
+        is_deeply([$f->get_tag_values('phase')],[]);
     }
 }
 is($fcount, 15);
