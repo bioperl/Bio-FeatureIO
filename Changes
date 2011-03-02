@@ -1,5 +1,4 @@
 Revision history for Perl extension Bio::FeatureIO.
 
-0.01  Sun Jan 31 14:49:01 2010
+{{$NEXT}}
 	- initial split off from BioPerl core 
-
