@@ -1,8 +1,5 @@
 #!/usr/bin/perl -w
 
-# This is a Module::Build script for BioPerl-Run installation.
-# See http://search.cpan.org/~kwilliams/Module-Build/lib/Module/Build.pm
-
 use strict;
 use warnings;
 use Module::Build;
