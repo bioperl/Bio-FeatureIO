@@ -40,7 +40,7 @@ sub new {
 
 sub data_handler {
     my ($self, $data) = @_;
-    my $nm = $data->{MODE} || $self->throw("No type tag defined!\n".Dumper($data));
+    my $nm = $data->{MODE} || $self->throw("No type tag defined!");
 
     $self->{current_state} = $data;
 

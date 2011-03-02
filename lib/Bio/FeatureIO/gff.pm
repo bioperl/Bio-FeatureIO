@@ -7,11 +7,11 @@ use base qw(Bio::FeatureIO);
 use URI::Escape;
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 
-# Defaults (GFF3); may make these instance-based
+# Defaults (GFF3); TODO: make these instance-based?
 my $URI_ENCODE = ';=%&,\t\n\r\x00-\x1f';
 my $GFF_SPLIT = "\t";
 my $ATTRIBUTE_SPLIT = "=";
-my $ATTRIBUTE_CONVERT = \&gff3_convert;
+my $FORMAT_CONVERT = \&gff3_convert;
 
 sub _initialize {
     my ($self, @args) = @_;
@@ -77,7 +77,7 @@ sub next_dataset {
 
                 for my $kv (split(/\s*;\s*/, $attstr)) {
                     my ($key, $rest) = split("$ATTRIBUTE_SPLIT", $kv, 2);
-                    my @vals = $rest ? map { $ATTRIBUTE_CONVERT->($_) } split(',',$rest)
+                    my @vals = $rest ? map { $FORMAT_CONVERT->($_) } split(',',$rest)
                         : ();
                     $tags{$key} = \@vals;
                 }
@@ -132,6 +132,10 @@ sub directive {
     }
     \%data;
 }
+
+# TODO: this gets into the handler internals a bit too much, and I think the
+# problem is orthogonal to the feature stream (in other words, maybe we simply
+# pass features along and plugin(s) will help resolve feature groups)
 
 sub next_feature_group {
     my $self = shift;
@@ -342,8 +346,8 @@ sub version {
 
 sub gff3_convert {
     my $val = $_[0];
-    $val =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/ego;
-    $val;
+    my $escaped = uri_escape($val, $URI_ENCODE);
+    $escaped ;
 }
 
 }

@@ -1,5 +1,3 @@
-# $Id: FeatureIO.pm 16108 2009-09-16 17:07:49Z cjfields $
-#
 # BioPerl module for Bio::FeatureIO
 #
 # Please direct questions and support issues to <bioperl-l@bioperl.org>
