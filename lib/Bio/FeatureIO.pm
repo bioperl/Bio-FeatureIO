@@ -518,7 +518,8 @@ sub _guess_format {
 
 sub _init_stream {
     my $self = shift;
-    my $fh = $self->_fh;
+    my $fh = $self->_fh
+        or $self->throw('must provide a file or filehandle for this Bio::FeatureIO');
     my $start = tell $fh;
     @{$self}{qw(stream_start stream_type)} =
         ($start >= 0) ?  ($start, 'seekable') : (0, 'string')
