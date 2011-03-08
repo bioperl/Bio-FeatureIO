@@ -29,10 +29,12 @@ my $build = Module::Build->new(
                             network => { }
                            },
     requires             => {
-                             'perl'               => '5.10.0',
-                             'Bio::Root::Version' => '1.006900',
-                             'URI::Escape'        => '0',    # dealing with web resources/Bio::FeatureIO::gff,Bio::FeatureIO::interpro,Bio::DB::Biblio::eutils,Bio::DB::EUtilParameters,Bio::DB::Query::GenBank,Bio::DB::NCBIHelper,Bio::SeqFeature::Annotated',
-                             'XML::DOM::XPath'    => '0.13', # parsing interpro features/Bio::FeatureIO::interpro',
+                             'perl'                => '5.10.0',
+                             'Bio::Root::Version'  => '1.006900',
+                             'Bio::GFF3::LowLevel' => 0,
+                             'IO::String'          => 0,
+                             'URI::Escape'         => '0',    # dealing with web resources/Bio::FeatureIO::gff,Bio::FeatureIO::interpro,Bio::DB::Biblio::eutils,Bio::DB::EUtilParameters,Bio::DB::Query::GenBank,Bio::DB::NCBIHelper,Bio::SeqFeature::Annotated',
+                             'XML::DOM::XPath'     => '0.13', # parsing interpro features/Bio::FeatureIO::interpro',
                             },
     recursive_test_files => 1,
     dynamic_config       => 1,

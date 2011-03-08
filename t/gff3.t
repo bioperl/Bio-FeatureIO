@@ -7,6 +7,10 @@ use lib './inc';
 use Bio::Root::Test;
 use Bio::FeatureIO;
 
+use Bio::GFF3::LowLevel 'gff3_parse_feature';
+
+use IO::String;
+
 # this is mainly GFF3-specific, GFF2/GTF to be added
 
 my ($io, $f, $s, $fcount, $scount);
@@ -390,5 +394,53 @@ TODO: {
 
 is($scount , 1);
 
-done_testing();
+################################################################################
+#
+# round-trip GFF3 reading/writing with next_feature_group
+#
 
+my $kg_file = test_input_file('knownGene2.gff3');
+ok( $io = Bio::FeatureIO->new( -file => $kg_file ) );
+my $out_gff3 = '';
+my $out = Bio::FeatureIO->new(
+    -fh      => IO::String->new( \$out_gff3 ),
+    -format  => 'gff',
+    -version => 3,
+  );
+ok( $out );
+while( my @f = $io->next_feature_group ) {
+    $out->write_feature($_) for @f;
+}
+
+my $kg_data = do { open my $kg, '<', $kg_file; gff3_data( $kg ) };
+my $out_data = gff3_data( IO::String->new( \$out_gff3 ));
+@$out_data = ( $out_data->[8] );
+@$kg_data = ( $kg_data->[8] );
+is_deeply $out_data, $kg_data;
+
+done_testing();
+exit;
+
+########
+
+sub gff3_data {
+    my $fh = shift;
+    my @features;
+    while( my $line = <$fh> ) {
+        last if $line =~ /^##FASTA/;
+        next if $line =~ /^#/;
+        push @features, gff3_parse_feature( $line );
+    }
+    # sort each set of attribute values to make the data structure more deterministic
+    for my $f (@features) {
+        for my $aset ( values %{$f->{attributes}} ) {
+            @$aset = sort @$aset;
+        }
+    }
+    return \@features;
+}
+sub slurp {
+    local $/;
+    open my $f, '<', $_[0] or die "$! reading file $_[0]";
+    return <$f>;
+}

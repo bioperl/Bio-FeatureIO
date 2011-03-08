@@ -7,11 +7,16 @@ use base qw(Bio::FeatureIO);
 use URI::Escape;
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 
+use Bio::GFF3::LowLevel qw(
+    gff3_format_feature
+    gff3_escape
+    gff3_unescape
+);
+
 # Defaults (GFF3); TODO: make these instance-based?
 my $URI_ENCODE = ';=%&,\t\n\r\x00-\x1f';
 my $GFF_SPLIT = "\t";
 my $ATTRIBUTE_SPLIT = "=";
-my $FORMAT_CONVERT = \&gff3_convert;
 
 sub _initialize {
     my ($self, @args) = @_;
@@ -42,6 +47,18 @@ sub next_feature {
 
 sub next_dataset {
     my $self = shift;
+
+    my $unescape_func = {
+        3 => \&gff3_unescape,
+      }->{$self->version}
+      || sub { $_[0] };
+
+    my $escape_func = {
+        3 => \&gff3_escape,
+      }->{$self->version}
+      || sub { $_[0] };
+
+
     local $/ = "\n";
     my $dataset;
     my $len = 0;
@@ -77,7 +94,7 @@ sub next_dataset {
 
                 for my $kv (split(/\s*;\s*/, $attstr)) {
                     my ($key, $rest) = split("$ATTRIBUTE_SPLIT", $kv, 2);
-                    my @vals = $rest ? map { $FORMAT_CONVERT->($_) } split(',',$rest)
+                    my @vals = $rest ? map { $unescape_func->($_) } split(',',$rest)
                         : ();
                     push @{$tags{$key} ||= [] }, @vals;
                 }
@@ -190,36 +207,70 @@ sub next_seq() {
  Function: writes a feature in GFF format.  the GFF version used is
            governed by the '-version' argument passed to Bio::FeatureIO->new(),
            and defaults to GFF version 3.
- Returns : ###FIXME
+ Returns : nothing meaningful
  Args    : a Bio::SeqFeature::Annotated object.
 
 =cut
 
 sub write_feature {
     my($self,$feature) = @_;
-    $self->throw_not_implemented;
-    if (!$feature) {
+
+    unless( $self->{wrote_gff_version} ) {
+        $self->_print("##gff-version ".$self->version."\n");
+        $self->{wrote_gff_version} = 1;
+    }
+
+    unless( $feature ) {
         $self->throw("gff.pm cannot write_feature unless you give a feature to write.\n");
     }
-    
-    # maybe use a dispatch table?  
-    given ($self->version) {
-        when (1) {
-            return $self->_write_feature_1($feature);
-        }
-        when (2) {
-            return $self->_write_feature_2($feature);
-        }
-        when (2.5) {
-            return $self->_write_feature_25($feature);
-        }
-        when (3) {
-            return $self->_write_feature_3($feature);
-        }
-        default {
-            $self->throw(sprintf("don't know how to write GFF version %s",$self->version));
-        }
+
+    my $funcname = '_write_feature_'.$self->version;
+    $self->can( $funcname )
+       or $self->throw( 'writing not implemented for GFF version '.$self->version );
+    { no strict 'refs';
+      return $self->$funcname( $feature );
     }
+}
+
+sub _write_feature_3 {
+    my ( $self, $feature ) = @_;
+
+    for my $f ( $feature, $feature->get_SeqFeatures ) {
+        my $str = gff3_format_feature( $self->_gff3_lowlevel_hashref( $f ))
+            # TODO: add some more info about the feature to this error message
+            or $self->throw( 'failed to format feature for writing' );
+        $self->_print( $str );
+    }
+    $self->_print( "###\n" );
+}
+
+sub _gff3_lowlevel_hashref {
+    my ( $self, $f ) = @_;
+
+    my @tags = $f->get_all_tags;
+    if( $f->can('phase') ) {
+        @tags = grep $_ ne 'phase', @tags;
+    }
+
+    return {
+        seq_id => $f->seq_id,
+        source => $f->source_tag,
+        type   => $f->primary_tag,
+        start  => $f->start,
+        end    => $f->end,
+        score  => $f->score,
+        strand => ( $f->strand ? $f->strand == 1 ? '+' : '-'
+                                : undef
+                  ),
+        phase  => ($f->can('phase') ? $f->phase : undef ),
+        attributes => {
+            map {
+                my $tag = $_;
+                $tag => [ $f->get_tag_values( $tag ) ]
+            } @tags,
+          },
+    };
+
 }
 
 ################################################################################
