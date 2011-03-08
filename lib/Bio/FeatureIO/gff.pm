@@ -346,8 +346,8 @@ sub version {
 
 sub gff3_convert {
     my $val = $_[0];
-    my $escaped = uri_escape($val, $URI_ENCODE);
-    $escaped ;
+    my $escaped = uri_unescape($val);
+    $escaped;
 }
 
 }
