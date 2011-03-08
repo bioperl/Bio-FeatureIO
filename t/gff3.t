@@ -331,6 +331,7 @@ for my $subf ($f[0]->get_SeqFeatures) {
     $types{$subf->primary_tag}++;
     $ct++
 }
+is( ($f[0]->get_tag_values('Note'))[0], 'growth%20hormone%201', 'one level of unescaping' );
 is($ct, 7);
 is($types{'three_prime_UTR'}, 1);
 is($types{'CDS'}, 5);
