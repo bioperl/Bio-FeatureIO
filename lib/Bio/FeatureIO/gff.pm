@@ -79,7 +79,7 @@ sub next_dataset {
                     my ($key, $rest) = split("$ATTRIBUTE_SPLIT", $kv, 2);
                     my @vals = $rest ? map { $FORMAT_CONVERT->($_) } split(',',$rest)
                         : ();
-                    $tags{$key} = \@vals;
+                    push @{$tags{$key} ||= [] }, @vals;
                 }
                 $feat{-tag} = \%tags;
                 $dataset->{DATA} = \%feat;

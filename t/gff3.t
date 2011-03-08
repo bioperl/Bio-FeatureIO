@@ -331,7 +331,7 @@ for my $subf ($f[0]->get_SeqFeatures) {
     $types{$subf->primary_tag}++;
     $ct++
 }
-is( ($f[0]->get_tag_values('Note'))[0], 'growth hormone 1', 'one level of unescaping' );
+is( ($f[0]->get_tag_values('Note'))[0], 'growth hormone 1' );
 is($ct, 7);
 is($types{'three_prime_UTR'}, 1);
 is($types{'CDS'}, 5);
@@ -344,6 +344,9 @@ is(@f, 1);
 %types = ();
 $ct = 0;
 is($f[0]->primary_tag,'mRNA');
+is_deeply( [sort $f[0]->get_all_tags], ["Alias", "Dbxref", "ID", "Note", "Ontology_term"] );
+is_deeply( [ sort $f[0]->get_tag_values('Ontology_term') ], [qw[ GO:0005194 GO:0005578 GO:0007155 ]] );
+is( ( $f[0]->get_tag_values('Note') )[0], 'osteomodulin' );
 for my $subf ($f[0]->get_SeqFeatures) {
     $types{$subf->primary_tag}++;
     $ct++        
