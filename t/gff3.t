@@ -414,8 +414,8 @@ while( my @f = $io->next_feature_group ) {
 
 my $kg_data = do { open my $kg, '<', $kg_file; gff3_data( $kg ) };
 my $out_data = gff3_data( IO::String->new( \$out_gff3 ));
-@$out_data = ( $out_data->[8] );
-@$kg_data = ( $kg_data->[8] );
+# delete 'score' attrs from the output data, this is replicated in the tags for this feature implementation
+delete $_->{score} for map $_->{attributes}, @$out_data;
 is_deeply $out_data, $kg_data;
 
 done_testing();
