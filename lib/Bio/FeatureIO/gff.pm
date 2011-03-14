@@ -962,10 +962,11 @@ the web:
 
   http://bugzilla.open-bio.org/
 
-=head1 AUTHOR
+=head1 AUTHORS
 
  Chris Fields, <cjfields at bioperl dot org>
- 
+ Robert Buels, <rbuels at cpan dot org>
+
 Refactored from the original work by:
 
  Allen Day, <allenday@ucla.edu>
