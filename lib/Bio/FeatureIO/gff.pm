@@ -233,24 +233,30 @@ sub write_feature {
 }
 
 sub _write_feature_3 {
-    my ( $self, $feature ) = @_;
+    my ( $self, $feature, $parent_feature ) = @_;
 
-    for my $f ( $feature, $feature->get_SeqFeatures ) {
-        my $str = gff3_format_feature( $self->_gff3_lowlevel_hashref( $f ))
-            # TODO: add some more info about the feature to this error message
-            or $self->throw( 'failed to format feature for writing' );
-        $self->_print( $str );
-    }
-    $self->_print( "###\n" );
+    my $str = gff3_format_feature( $self->_gff3_lowlevel_hashref( $feature, $parent_feature ))
+        # TODO: add some more info about the feature to this error message
+        or $self->throw( 'failed to format feature for writing' );
+    $self->_print( $str );
+
+    $self->_write_feature_3( $_, $feature ) for $feature->get_SeqFeatures;
+
+    $self->_print( "###\n" ) unless $parent_feature;
 }
 
 sub _gff3_lowlevel_hashref {
-    my ( $self, $f ) = @_;
+    my ( $self, $f, $parent ) = @_;
 
     my @tags = $f->get_all_tags;
     if( $f->can('phase') ) {
         @tags = grep $_ ne 'phase', @tags;
     }
+
+    if( $parent && ! $parent->has_tag('ID') ) {
+        $self->throw("feature ".($parent->display_name||'(no display name)')." has subfeatures but no 'ID' tag, cannot write as GFF3");
+    }
+    my $parent_id = $parent ? ($parent->get_tag_values('ID'))[0] : ();
 
     return {
         seq_id => $f->seq_id,
@@ -264,10 +270,12 @@ sub _gff3_lowlevel_hashref {
                   ),
         phase  => ($f->can('phase') ? $f->phase : undef ),
         attributes => {
-            map {
+            ( map {
                 my $tag = $_;
                 $tag => [ $f->get_tag_values( $tag ) ]
-            } @tags,
+              } @tags,
+            ),
+            ( $parent_id ? ( Parent => [ $parent_id ] ) : () ),
           },
     };
 
