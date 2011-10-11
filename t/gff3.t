@@ -118,6 +118,7 @@ $scount = 0;
 ok( $io = Bio::FeatureIO->new( -file => test_input_file('hybrid1.gff3') ) );
 
 #try to read sequences first.  should be undef
+is $io->seqio, undef;
 while($s = $io->next_seq()){
   $scount++;
 }
@@ -154,8 +155,10 @@ while($f = $io->next_feature()){
 is($fcount , 6);
 
 #then try to read sequences again.
+isa_ok $io->seqio, 'Bio::SeqIO';
 while($s = $io->next_seq()){
     $scount++;
+    isa_ok $s, 'Bio::SeqI';
     if ($scount == 1) {
         is($s->id, 'A00469');
     }
