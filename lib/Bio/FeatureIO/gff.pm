@@ -290,7 +290,8 @@ sub _gff3_lowlevel_hashref {
 =head2 fasta_mode()
 
  Usage   : $obj->fasta_mode($newval)
- Function: 
+ Function: Indicates whether or not the parser is currently processing the FASTA
+           section of the GFF stream
  Example : 
  Returns : Value of fasta_mode (a scalar)
  Args    : None
@@ -304,8 +305,10 @@ sub fasta_mode {
 =head2 seqio()
 
  Usage   : $obj->seqio($newval)
- Function: holds a Bio::SeqIO instance for handling the GFF3 ##FASTA section.
- Returns : value of seqio (a scalar)
+ Function: get/set a Bio::SeqIO instance for handling the GFF3 ##FASTA section.
+           Returns undef before the ##FASTA section of the GFF3 stream has been
+           reached.
+ Returns : value of seqio (a scalar) or undef
  Args    : on set, new value (a scalar or undef, optional)
 
 =cut
@@ -991,7 +994,6 @@ Internal methods are usually preceded with a _
 
 =head2 next_feature_group
 
- Title   : next_feature_group
  Usage   : @feature_group = $stream->next_feature_group
  Function: Reads the next feature_group from $stream and returns it.
 
@@ -1011,7 +1013,11 @@ Internal methods are usually preceded with a _
 
 =head2 next_seq()
 
-access the FASTA section (if any) at the end of the GFF stream. note that this
-method will return undef if not all features in the stream have been handled
+  Usage   : $featureio->next_seq( );
+  Function: access the FASTA section (if any) at the end of the GFF stream. Note
+            that this method will return undef before all the features in the GFF
+            stream have been handled.
+  Returns : a Bio::SeqI object or undef
+  Args    : none
 
 =cut
