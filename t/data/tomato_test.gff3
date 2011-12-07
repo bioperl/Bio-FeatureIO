@@ -264,3 +264,4 @@ SL2.40ch03	ITAG_eugene	exon	64418110	64419085	.	+	1	ID=exon:Solyc03g123530.2.1.1
 SL2.40ch03	ITAG_eugene	CDS	64418110	64418880	.	+	0	ID=CDS:Solyc03g123530.2.1.16;Parent=mRNA:Solyc03g123530.2.1;from_BOGAS=1
 SL2.40ch03	ITAG_eugene	three_prime_UTR	64418881	64419085	.	+	.	ID=three_prime_UTR:Solyc03g123530.2.1.0;Parent=mRNA:Solyc03g123530.2.1;from_BOGAS=1
 ###
+###
