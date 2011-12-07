@@ -162,8 +162,17 @@ sub next_feature_group {
             $self->seqio($object);
             last;
         }
-        last if $self->handler->resolve_references;
+
+        if( $self->handler->resolve_references ) {
+            if( @toplevel_feats ) {
+                last;
+            } else {
+                next;
+            }
+        }
+
         next unless $object;
+
         if ($object->has_tag('ID')) {
             my ($id) = $object->get_tag_values('ID');
             $self->throw("Oops! ID $id exists more than once in your file!")
