@@ -13,11 +13,6 @@ use Bio::GFF3::LowLevel qw(
     gff3_unescape
 );
 
-# Defaults (GFF3); TODO: make these instance-based?
-my $URI_ENCODE = ';=%&,\t\n\r\x00-\x1f';
-my $GFF_SPLIT = "\t";
-my $ATTRIBUTE_SPLIT = "=";
-
 sub _initialize {
     my ($self, @args) = @_;
     $self->SUPER::_initialize(@args);
@@ -66,7 +61,7 @@ sub next_dataset {
     while (my $line = $self->_readline) {
         $len += CORE::length($line);
         given ($line) {
-            when (/^\s*$/) {  next GFFLINE  } # blank lines 
+            when (/^\s*$/) {  next GFFLINE  } # blank lines
             when (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) { # comments and directives
                 if (length($1) == 1) {
                     chomp $line;
@@ -90,10 +85,10 @@ sub next_dataset {
                 # validate here?
                 (@feat{qw(-seq_id -source -primary_tag -start -end
                        -score -strand -phase)}, $attstr) =
-                    map {$_ ne '.' ? $_ : undef } split($GFF_SPLIT,$line);
+                    map {$_ ne '.' ? $_ : undef } split( "\t" ,$line);
 
                 for my $kv (split(/\s*;\s*/, $attstr)) {
-                    my ($key, $rest) = split("$ATTRIBUTE_SPLIT", $kv, 2);
+                    my ($key, $rest) = split( '=', $kv, 2);
                     my @vals = $rest ? map { $unescape_func->($_) } split(',',$rest)
                         : ();
                     push @{$tags{$key} ||= [] }, @vals;
@@ -160,7 +155,7 @@ sub next_feature_group {
     my %seen_ids;
     my @all_feats;
     my @toplevel_feats;
-    
+
     while (my $ds = $self->next_dataset) {
         my $object = $self->handler->data_handler($ds);
         if ($object && $object->isa('Bio::SeqIO')) {
@@ -404,12 +399,6 @@ sub version {
         #$self->set_config();
     }
     return $self->{'version'};
-}
-
-sub gff3_convert {
-    my $val = $_[0];
-    my $escaped = uri_unescape($val);
-    $escaped;
 }
 
 }
