@@ -404,7 +404,7 @@ is($scount , 1);
 #
 
 for my $modifier ( sub {}, sub { $_[0]->remove_tag('Parent') if $_[0]->has_tag('Parent') } ) {
-    my $kg_file = test_input_file('knownGene2.gff3');
+    my $kg_file = test_input_file('tomato_test.gff3');
     ok( $io = Bio::FeatureIO->new( -file => $kg_file ) );
     my $out_gff3 = '';
     my $out = Bio::FeatureIO->new(
