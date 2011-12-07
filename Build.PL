@@ -15,8 +15,8 @@ my $build = Module::Build->new(
     create_license       => 1,
     meta_merge           => {
 	                     'resources' => {
-				         'repository' => 'git@github.com:bioperl/bioperl-live.git',
-	                                    },
+				         'repository' => 'http://github.com/bioperl/Bio-FeatureIO',
+                             },
 			    },
     auto_features       => {
                             Network => {
