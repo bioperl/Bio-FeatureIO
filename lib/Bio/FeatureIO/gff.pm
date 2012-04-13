@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use 5.010;
 use base qw(Bio::FeatureIO);
-use URI::Escape;
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
 
 use Bio::GFF3::LowLevel qw(
@@ -60,7 +59,7 @@ sub next_dataset {
     GFFLINE:
     while (my $line = $self->_readline) {
         $len += CORE::length($line);
-        given ($line) {
+        for ($line) {
             when (/^\s*$/) {  next GFFLINE  } # blank lines
             when (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) { # comments and directives
                 if (length($1) == 1) {
