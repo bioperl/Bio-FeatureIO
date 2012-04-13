@@ -84,7 +84,7 @@ sub next_dataset {
                 # validate here?
                 (@feat{qw(-seq_id -source -primary_tag -start -end
                        -score -strand -phase)}, $attstr) =
-                    map {$_ ne '.' ? $_ : undef } split( "\t" ,$line);
+                    map {$_ eq '.' ? undef : $_ } split( "\t" ,$line);
 
                 for my $kv (split(/\s*;\s*/, $attstr)) {
                     my ($key, $rest) = split( '=', $kv, 2);
