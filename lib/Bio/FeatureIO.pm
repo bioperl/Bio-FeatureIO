@@ -47,7 +47,7 @@ An I/O iterator subsystem for genomic sequence features.  This set of parsers
 can be used on many levels:
 
 1) Simple parsing: the next_dataset() method returns hash-refs containing
-both the data parsed and 
+both the data parsed and
 
 Bio::FeatureIO is a handler module for the formats in the FeatureIO set (eg,
 Bio::FeatureIO::GFF). It is the officially sanctioned way of getting at the
@@ -227,15 +227,15 @@ Your participation is much appreciated.
   bioperl-l@bioperl.org                  - General discussion
   http://bioperl.org/wiki/Mailing_lists  - About the mailing lists
 
-=head2 Support 
+=head2 Support
 
 Please direct usage questions or support issues to the mailing list:
 
 I<bioperl-l@bioperl.org>
 
-rather than to the module maintainer directly. Many experienced and 
-reponsive experts will be able look at the problem and quickly 
-address it. Please include a thorough description of the problem 
+rather than to the module maintainer directly. Many experienced and
+reponsive experts will be able look at the problem and quickly
+address it. Please include a thorough description of the problem
 with code and data examples if at all possible.
 
 =head2 Reporting Bugs
@@ -336,7 +336,7 @@ sub _initialize {
     $format ||= 'GFF3';
     $handler_args ||= {};
     (ref($handler_args) eq 'HASH') ||
-        $self->throw("-handler_args must be a hash reference");    
+        $self->throw("-handler_args must be a hash reference");
     $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(
         -verbose => $self->verbose,
         -fh      => $self->_fh,
@@ -345,7 +345,7 @@ sub _initialize {
     $seq    && $self->seq( $seq);
 
     $self->_init_stream();
-    $self->handler($handler);        
+    $self->handler($handler);
 }
 
 =head2 newFh
@@ -508,12 +508,12 @@ END
 sub _guess_format {
     my $class = shift;
     return unless $_ = shift;
-    return 'gff' if /\.gff3?$/i;
+    return 'gff3' if /\.gff3$/i;
     return 'gff' if /\.gtf$/i;
     return 'bed' if /\.bed$/i;
     return 'ptt' if /\.ptt$/i;
 
-    return 'gff';    #the default
+    return 'gff3';    #the default
 }
 
 sub _init_stream {
@@ -551,5 +551,3 @@ sub PRINT {
 1;
 
 __END__
-
-

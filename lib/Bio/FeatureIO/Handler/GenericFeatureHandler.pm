@@ -6,24 +6,26 @@ use strict;
 use warnings;
 use Bio::Factory::ObjectFactory;
 use Bio::SeqIO;
+use Data::Dumper;
+use feature qw(say);
 
 my $ct = 0;
 my %GFF3_RESERVED_TAGS = map {$_ => $ct++ }
     qw(ID Name Alias Parent Target Gap
     Derives_from Note Dbxref Ontology_term Index);
-    
+
 my %HANDLERS = (
     # GFF3-specific
     'directive'             => \&directives,
-    
+
     # BED-specific
     'track_definition'      => \&track_definition,
-    
+
     # generic
     'comment'               => \&comment,
     'feature'               => \&seqfeature,
     'sequence'              => \&sequence,
-    
+
     # defaults (none for now)
     #'default'               => \&default
 );
@@ -47,7 +49,7 @@ sub data_handler {
     my $method = (exists $HANDLERS{$nm}) ? ($HANDLERS{$nm}) :
                 (exists $HANDLERS{'_DEFAULT_'}) ? ($HANDLERS{'_DEFAULT_'}) :
                 undef;
-    
+
     if ($method && ref $method eq 'CODE') {
         return $self->$method($data);
     } else {
@@ -153,12 +155,22 @@ sub seqfeature {
     my ($handler, $data) = @_;
     # TODO: Optionally type check ontology here, preferably prior to expending
     #       unnecessary energy/time on creating objects (Robert Bradbury rules)
-    return $handler->feature_factory->create_object(%{$data->{DATA}});
+    return $handler->feature_factory->create_object(
+        start       => $data->{DATA}{start},
+        end         => $data->{DATA}{end},
+        strand      => $data->{DATA}{strand},
+        source      => $data->{DATA}{source},
+        seq_id      => $data->{DATA}{seq_id},
+        score       => $data->{DATA}{score},
+        phase       => $data->{DATA}{phase},
+        primary_tag => $data->{DATA}{type},
+        primary_id  => exists $data->{DATA}{attributes}{ID} ? $data->{DATA}{attributes}{ID}[0] : undef,
+        );
 }
 
 sub directives {
     my ($handler, $data) = @_;
-    my $directive = $data->{DATA}->{type};
+    my $directive = $data->{DATA}->{directive};
     if ($directive eq 'sequence') {
         my $fh = $handler->file_handle;
         $handler->throw("Handler doesn't have a set file handle") if !$fh;
@@ -172,7 +184,7 @@ sub directives {
             -start     => $sf_data->{start},
             -end       => $sf_data->{end},
             -strand    => 1,
-            -seq_id    => $sf_data->{id},
+            -seq_id    => $sf_data->{seq_id},
             -primary_tag  => 'region');
     } else {
         # defaults for other directives?
@@ -182,15 +194,15 @@ sub directives {
 
 sub sequence {
     my ($handler, $data) = @_;
-    
+
     # So, at this point we have to decide whether to indicate this is the start
     # of a sequence stream (i.e. grab the file handle and create a SeqIO), or
     # allow further sequence data to be passed in. We punt and do the easy thing
     # for now, but we should allow flexibility here, so maybe something
     # configurable?
-    
+
     # Note this relies on having knowledge of the specific place in the stream
-    
+
     my ($start, $len) = @{$data}{qw(START LENGTH)};
     my $fh = $handler->file_handle;
     $handler->throw("Handler doesn't have a set file handle") if !$fh;
@@ -290,12 +302,12 @@ BioPerl mailing lists. Your participation is much appreciated.
 
 Patches are always welcome.
 
-=head2 Support 
- 
+=head2 Support
+
 Please direct usage questions or support issues to the mailing list:
-  
+
 L<bioperl-l@bioperl.org>
-  
+
 rather than to the module maintainer directly. Many experienced and reponsive
 experts will be able look at the problem and quickly address it. Please include
 a thorough description of the problem with code and data examples if at all
