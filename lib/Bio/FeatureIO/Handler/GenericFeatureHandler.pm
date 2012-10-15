@@ -182,6 +182,7 @@ sub _resolve_blocks {
         my $end = $st + $len -1;
 
         push @segs, $handler->feature_factory->create_object(
+            -seq_id => $data->{DATA}{-seq_id},
             -start  => $st,
             -end    => $end,
             -strand => $data->{DATA}{-strand},
