@@ -107,7 +107,7 @@ sub next_feature {
 
 sub next_dataset {
     my $self = shift;
-    my $mode = 'feature';
+    my $mode = 'bed_feature';
     while (my $line = $self->_readline) {
         my $dataset;
         next if $line =~ /^\s*$/;
@@ -118,7 +118,7 @@ sub next_dataset {
         } else {
             my (%feat, %tags);
             (@feat{qw(-seq_id -start -end -display_name -score -strand)},
-             @tags{qw(thickstart thickend itemrgb blockct blocksizes blockstart)}) =
+             @tags{qw(thickstart thickend itemrgb num_blocks block_sizes block_start)}) =
                     split(/\s+/, $line, 12);
             $feat{-strand} ||= '.'; # unknown is probably a good default
             $feat{-start} += 1;     # convert to 1-based coordinates

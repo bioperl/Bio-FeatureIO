@@ -6,24 +6,26 @@ use strict;
 use warnings;
 use Bio::Factory::ObjectFactory;
 use Bio::SeqIO;
+use Data::Dumper;
 
 my $ct = 0;
 my %GFF3_RESERVED_TAGS = map {$_ => $ct++ }
     qw(ID Name Alias Parent Target Gap
     Derives_from Note Dbxref Ontology_term Index);
-    
+
 my %HANDLERS = (
     # GFF3-specific
     'directive'             => \&directives,
-    
+
     # BED-specific
     'track_definition'      => \&track_definition,
-    
+    'bed_feature'           => \&bed_seqfeature,
+
     # generic
     'comment'               => \&comment,
     'feature'               => \&seqfeature,
     'sequence'              => \&sequence,
-    
+
     # defaults (none for now)
     #'default'               => \&default
 );
@@ -47,7 +49,7 @@ sub data_handler {
     my $method = (exists $HANDLERS{$nm}) ? ($HANDLERS{$nm}) :
                 (exists $HANDLERS{'_DEFAULT_'}) ? ($HANDLERS{'_DEFAULT_'}) :
                 undef;
-    
+
     if ($method && ref $method eq 'CODE') {
         return $self->$method($data);
     } else {
@@ -151,9 +153,42 @@ sub feature_class {
 
 sub seqfeature {
     my ($handler, $data) = @_;
-    # TODO: Optionally type check ontology here, preferably prior to expending
-    #       unnecessary energy/time on creating objects (Robert Bradbury rules)
     return $handler->feature_factory->create_object(%{$data->{DATA}});
+}
+
+sub bed_seqfeature {
+    my ($handler, $data) = @_;
+
+    my $feat = $handler->feature_factory->create_object(%{$data->{DATA}});
+
+    # TODO: need to handle less than BED12 here, some bugginess upstream ATM
+    for my $sf (@{$handler->_resolve_blocks($data)}) {
+        $feat->add_SeqFeature($sf);
+    }
+    $feat;
+}
+
+# TODO: allow for other things besides exons (make configurable)
+sub _resolve_blocks {
+    my ($handler, $data) = @_;
+
+    # FFS, I need to remove the '-' and make this more generic
+    my $gene_st = $data->{DATA}{-start};
+    my @blk_len = split(',', $data->{DATA}{-tag}{block_sizes});
+    my @blk_st = map { $gene_st + $_ } split(',', $data->{DATA}{-tag}{block_start});
+    my @segs;
+    for my $st (@blk_st) {
+        my $len = shift @blk_len;
+        my $end = $st + $len -1;
+
+        push @segs, $handler->feature_factory->create_object(
+            -start  => $st,
+            -end    => $end,
+            -strand => $data->{DATA}{-strand},
+            -primary_tag => 'exon'
+        );
+    }
+    \@segs
 }
 
 sub directives {
@@ -182,15 +217,15 @@ sub directives {
 
 sub sequence {
     my ($handler, $data) = @_;
-    
+
     # So, at this point we have to decide whether to indicate this is the start
     # of a sequence stream (i.e. grab the file handle and create a SeqIO), or
     # allow further sequence data to be passed in. We punt and do the easy thing
     # for now, but we should allow flexibility here, so maybe something
     # configurable?
-    
+
     # Note this relies on having knowledge of the specific place in the stream
-    
+
     my ($start, $len) = @{$data}{qw(START LENGTH)};
     my $fh = $handler->file_handle;
     $handler->throw("Handler doesn't have a set file handle") if !$fh;
@@ -290,12 +325,12 @@ BioPerl mailing lists. Your participation is much appreciated.
 
 Patches are always welcome.
 
-=head2 Support 
- 
+=head2 Support
+
 Please direct usage questions or support issues to the mailing list:
-  
+
 L<bioperl-l@bioperl.org>
-  
+
 rather than to the module maintainer directly. Many experienced and reponsive
 experts will be able look at the problem and quickly address it. Please include
 a thorough description of the problem with code and data examples if at all
