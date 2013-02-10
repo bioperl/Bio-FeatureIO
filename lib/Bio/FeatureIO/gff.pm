@@ -196,11 +196,7 @@ sub next_feature_group {
 
 sub next_seq() {
     my $self = shift;
-    return unless $self->fasta_mode;
-    #first time next_seq has been called.  initialize Bio::SeqIO instance
-    if(!$self->seqio){
-        $self->seqio( Bio::SeqIO->new(-format => 'fasta', -fh => $self->_fh()) );
-    }
+    return undef unless $self->fasta_mode();
     return $self->seqio->next_seq();
 }
 
@@ -281,7 +277,6 @@ sub _gff3_lowlevel_hashref {
             ( $parent_id ? ( Parent => [ $parent_id ] ) : () ),
           },
     };
-
 }
 
 ################################################################################
@@ -308,21 +303,26 @@ sub fasta_mode {
 =head2 seqio()
 
  Usage   : $obj->seqio($newval)
- Function: get/set a Bio::SeqIO instance for handling the GFF3 ##FASTA section.
-           Returns undef before the ##FASTA section of the GFF3 stream has been
-           reached.
- Returns : value of seqio (a scalar) or undef
+ Function: get/set a Bio::SeqIO instance to handle the GFF3 ##FASTA section.
+ Returns : a Bio::SeqIO object or undef
  Args    : on set, new value (a scalar or undef, optional)
 
 =cut
 
 sub seqio {
-    my($self,$val) = @_;
-    $self->{'seqio'} = $val if defined($val);
-    return $self->{'seqio'};
+  my($self,$val) = @_;
+  if (defined $val) {
+    $self->{'seqio'} = $val;
+  } else {
+    # Cannot get seqio before we've reached the ##FASTA section
+    return undef unless $self->fasta_mode();
+    if (not defined $self->{'seqio'}) {
+      # Initialize Bio::SeqIO instance
+      $self->{'seqio'} = Bio::SeqIO->new(-format => 'fasta', -fh => $self->_fh());
+    }
+  }
+  return $self->{'seqio'};
 }
-
-# TODO: reimplement to call the handler's set parameters (getter only)
 
 =head2 sequence_region()
 
@@ -517,8 +517,15 @@ Bio::SeqFeature::Annotated object.
 #        $values =~ s/^["']//;
 #        $values =~ s/["']$//; #' terminate the quote for emacs
 #  
-#        my @values = map{uri_unescape($_)} split ',', $values;
-#  
+#        my @values;
+#        if ($key eq 'Target') {
+#            #dont unescape Target values
+#            @values = split ',', $values;
+#        }
+#        else {
+#            @values = map{uri_unescape($_)} split ',', $values
+#        }
+  
 #       #minor hack to allow for multiple instances of the same tag
 #        if ($attr{$key}) {
 #          my @tmparray = @{$attr{$key}};
@@ -974,7 +981,7 @@ Refactored from the original work by:
 =head1 CONTRIBUTORS
 
  Steffen Grossmann, <grossman@molgen.mpg.de>
- Scott Cain, <cain@cshl.edu>
+ Scott Cain, <scain@cpan.org>
  Rob Edwards <rob@salmonella.org>
 
 =head1 APPENDIX
