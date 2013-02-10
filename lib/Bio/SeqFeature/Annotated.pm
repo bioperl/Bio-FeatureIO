@@ -1,5 +1,3 @@
-# $Id$
-#
 # BioPerl module for Bio::SeqFeature::Annotated
 #
 # Please direct questions and support issues to <bioperl-l@bioperl.org> 
@@ -70,7 +68,7 @@ Report bugs to the Bioperl bug tracking system to help us keep track
 the bugs and their resolution.  Bug reports can be submitted via 
 the web:
 
-  http://bugzilla.open-bio.org/
+  https://redmine.open-bio.org/projects/bioperl/
 
 =head1 AUTHOR - Allen Day
 
@@ -155,64 +153,241 @@ Bio::Annotation::Collection. The type is then checked against SOFA.
 
 There have been several requests to have type checking be optionally run. 
 
+=over
+
+=item *
+
 Bio::FeatureHolderI::create_hierarchy_from_ParentIDs
+
+=item *
+
 Bio::FeatureHolderI::feature_count
+
+=item *
+
 Bio::FeatureHolderI::get_all_SeqFeatures
+
+=item *
+
 Bio::FeatureHolderI::set_ParentIDs_from_hierarchy
+
+=item *
+
 Bio::RangeI::contains
+
+=item *
+
 Bio::RangeI::disconnected_ranges
+
+=item *
+
 Bio::RangeI::equals
+
+=item *
+
 Bio::RangeI::intersection
+
+=item *
+
 Bio::RangeI::offsetStranded
+
+=item *
+
 Bio::RangeI::overlap_extent
+
+=item *
+
 Bio::RangeI::overlaps
+
+=item *
+
 Bio::RangeI::subtract
+
+=item *
+
 Bio::RangeI::union
+
+=item *
+
 Bio::SeqFeature::Annotated::Dumper
+
+=item *
+
 Bio::SeqFeature::Annotated::MAX_TYPE_CACHE_MEMBERS
+
+=item *
+
 Bio::SeqFeature::Annotated::add_Annotation
+
+=item *
+
 Bio::SeqFeature::Annotated::add_SeqFeature
+
+=item *
+
 Bio::SeqFeature::Annotated::add_tag_value
+
+=item *
+
 Bio::SeqFeature::Annotated::add_target
+
+=item *
+
 Bio::SeqFeature::Annotated::annotation
+
+=item *
+
 Bio::SeqFeature::Annotated::attach_seq
+
+=item *
+
 Bio::SeqFeature::Annotated::display_name
+
+=item *
+
 Bio::SeqFeature::Annotated::each_target
+
+=item *
+
 Bio::SeqFeature::Annotated::end
+
+=item *
+
 Bio::SeqFeature::Annotated::entire_seq
+
+=item *
+
 Bio::SeqFeature::Annotated::frame
+
+=item *
+
 Bio::SeqFeature::Annotated::from_feature
+
+=item *
+
 Bio::SeqFeature::Annotated::get_Annotations
+
+=item *
+
 Bio::SeqFeature::Annotated::get_SeqFeatures
+
+=item *
+
 Bio::SeqFeature::Annotated::get_all_tags
+
+=item *
+
 Bio::SeqFeature::Annotated::get_tag_values
+
+=item *
+
 Bio::SeqFeature::Annotated::get_tagset_values
+
+=item *
+
 Bio::SeqFeature::Annotated::has_tag
+
+=item *
+
 Bio::SeqFeature::Annotated::length
+
+=item *
+
 Bio::SeqFeature::Annotated::location
+
+=item *
+
 Bio::SeqFeature::Annotated::name
+
+=item *
+
 Bio::SeqFeature::Annotated::new
+
+=item *
+
 Bio::SeqFeature::Annotated::phase
+
+=item *
+
 Bio::SeqFeature::Annotated::primary_tag
+
+=item *
+
 Bio::SeqFeature::Annotated::remove_Annotations
+
+=item *
+
 Bio::SeqFeature::Annotated::remove_SeqFeatures
+
+=item *
+
 Bio::SeqFeature::Annotated::remove_tag
+
+=item *
+
 Bio::SeqFeature::Annotated::score
+
+=item *
+
 Bio::SeqFeature::Annotated::seq
+
+=item *
+
 Bio::SeqFeature::Annotated::seq_id
+
+=item *
+
 Bio::SeqFeature::Annotated::source
+
+=item *
+
 Bio::SeqFeature::Annotated::source_tag
+
+=item *
+
 Bio::SeqFeature::Annotated::start
+
+=item *
+
 Bio::SeqFeature::Annotated::strand
+
+=item *
+
 Bio::SeqFeature::Annotated::type
+
+=item *
+
 Bio::SeqFeature::Annotated::uri_escape
+
+=item *
+
 Bio::SeqFeature::Annotated::uri_unescape
+
+=item *
+
 Bio::SeqFeature::TypedSeqFeatureI::croak
+
+=item *
+
 Bio::SeqFeature::TypedSeqFeatureI::ontology_term
+
+=item *
+
 Bio::SeqFeatureI::generate_unique_persistent_id
+
+=item *
+
 Bio::SeqFeatureI::gff_string
+
+=item *
+
 Bio::SeqFeatureI::primary_id
+
+=item *
+
 Bio::SeqFeatureI::spliced_seq
+
+=back
 
 =cut
 
@@ -313,6 +488,7 @@ sub from_feature {
             $self->add_Annotation($key,$val)
         }
     }
+    return 1;
 }
 #given a key and its values, make the values into
 #Bio::Annotation::\w+ objects
@@ -1010,8 +1186,7 @@ sub each_target {
  Title   : _expand_region
  Usage   : $self->_expand_region($feature);
  Function: Expand the total region covered by this feature to
-           accomodate for the given feature.
-
+           accommodate for the given feature.
            May be called whenever any kind of subfeature is added to this
            feature. add_SeqFeature() already does this.
  Returns : 
