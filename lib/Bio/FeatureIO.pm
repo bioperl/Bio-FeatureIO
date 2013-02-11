@@ -50,8 +50,7 @@ can be used on many levels:
 both the data parsed and 
 
 Bio::FeatureIO is a handler module for the formats in the FeatureIO set (eg,
-Bio::FeatureIO::GFF). It is the officially sanctioned way of getting at the
-format objects, which most people should use.
+Bio::FeatureIO::GFF).
 
 The Bio::FeatureIO system can be thought of like biological file handles. They
 are attached to filehandles with smart formatting rules (eg, GFF format, or BED
@@ -244,7 +243,7 @@ Report bugs to the Bioperl bug tracking system to help us keep track
 the bugs and their resolution.  Bug reports can be submitted via the
 web:
 
-  http://bugzilla.open-bio.org/
+  https://redmine.open-bio.org/projects/bioperl/
 
 =head1 AUTHOR - Allen Day
 
@@ -389,6 +388,18 @@ sub fh {
     tie $$s, $class, $self;
     return $s;
 }
+
+=head2 format
+
+ Title   : format
+ Usage   : $format = $stream->format()
+ Function: Get the feature format
+ Returns : feature format
+ Args    : none
+
+=cut
+
+# format() method inherited from Bio::Root::IO
 
 =head2 next_feature
 
@@ -551,5 +562,4 @@ sub PRINT {
 1;
 
 __END__
-
 
