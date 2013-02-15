@@ -15,6 +15,10 @@ use Bio::GFF3::LowLevel qw(
 sub _initialize {
     my ($self, @args) = @_;
     $self->SUPER::_initialize(@args);
+
+    my %args = @args;
+    $self->ignore_seq_region($args{-ignore_seq_region} || 0);
+
     my ($version) = $self->_rearrange([qw(VERSION)], @args);
     $version ||= 3;
     $self->version($version);
@@ -125,6 +129,7 @@ sub directive {
     given ($directive) {
         # validate here?
         when ('sequence-region') {
+            continue if $self->ignore_seq_region();
             @data{qw(type id start end)} =
                 ('sequence-region', split(/\s+/, $rest));
         }
@@ -142,6 +147,19 @@ sub directive {
         }
     }
     \%data;
+}
+
+=head1 ignore_seq_region
+
+Set this flag to keep FeatureIO from returning
+a feature for a ##sequence-region directive
+
+=cut
+
+sub ignore_seq_region {
+  my($self,$val) = @_;
+  $self->{'ignore_seq_region'} = $val if defined($val);
+  return $self->{'ignore_seq_region'};
 }
 
 # TODO: this gets into the handler internals a bit too much, and I think the
