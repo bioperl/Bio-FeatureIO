@@ -235,7 +235,7 @@ while($f = $io->next_feature()){
         is($f->primary_tag, 'region');
         is($f->primary_id, undef);
         is($f->seq_id, 'foo');
-        is($f->source_tag, '');
+        is($f->source_tag, undef);
         is($f->score, undef);
         is($f->start, 1);
         is($f->end, 100);
