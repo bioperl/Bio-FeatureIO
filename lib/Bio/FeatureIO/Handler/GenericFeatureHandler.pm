@@ -159,6 +159,7 @@ sub seqfeature {
 sub directives {
     my ($handler, $data) = @_;
     my $directive = $data->{DATA}->{type};
+    return unless $directive;
     if ($directive eq 'sequence') {
         my $fh = $handler->file_handle;
         $handler->throw("Handler doesn't have a set file handle") if !$fh;

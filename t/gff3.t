@@ -247,6 +247,18 @@ is($fcount , 1); #sequence-region
 
 ################################################################################
 #
+# use ignore_seq_region to skip sequence_region directives
+#
+
+ok( $io = Bio::FeatureIO->new(-file => test_input_file('directives.gff3'),
+                              -ignore_seq_region => 1,
+                              -verbose => test_debug()));
+
+is($io->next_feature(), undef);
+
+
+################################################################################
+#
 # use FeatureIO::gff to read a GFF3 file as aggregated feature groups
 #
 

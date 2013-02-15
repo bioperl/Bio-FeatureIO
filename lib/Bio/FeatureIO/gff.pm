@@ -129,7 +129,7 @@ sub directive {
     given ($directive) {
         # validate here?
         when ('sequence-region') {
-            continue if $self->ignore_seq_region();
+            break if $self->ignore_seq_region();
             @data{qw(type id start end)} =
                 ('sequence-region', split(/\s+/, $rest));
         }
