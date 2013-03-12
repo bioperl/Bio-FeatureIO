@@ -35,6 +35,7 @@ my $build = Module::Build->new(
                              'IO::String'          => 0,
                              'URI::Escape'         => '0',    # dealing with web resources/Bio::FeatureIO::gff,Bio::FeatureIO::interpro,Bio::DB::Biblio::eutils,Bio::DB::EUtilParameters,Bio::DB::Query::GenBank,Bio::DB::NCBIHelper,Bio::SeqFeature::Annotated',
                              'XML::DOM::XPath'     => '0.13', # parsing interpro features/Bio::FeatureIO::interpro',
+                             'Config::Any'         => '0'     # used by Bio::Feature::IO
                             },
     build_requires       => {'Test::Warn' => 0 },
     recursive_test_files => 1,

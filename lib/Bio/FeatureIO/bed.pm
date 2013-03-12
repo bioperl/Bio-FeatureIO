@@ -6,12 +6,12 @@ Bio::FeatureIO::bed - read/write features from UCSC BED format
 
 =head1 SYNOPSIS
 
-  my $in = Bio::FeatureIO(-format => 'bed', -file => 'file.bed');
+  my $in = Bio::FeatureIO->new(-format => 'bed', -file => 'file.bed');
   for my $feat ($in->next_feature) {
     # do something with $feat (a Bio::SeqFeature::Annotated object)
   }
 
-  my $out = Bio::FeatureIO(-format=>'bed');
+  my $out = Bio::FeatureIO->new(-format=>'bed');
   for my $feat ($seq->get_seqFeatures) {
     $out->write_feature($feat);
   }

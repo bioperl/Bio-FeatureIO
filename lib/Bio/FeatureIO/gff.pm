@@ -917,7 +917,7 @@ possibility is to standardize on BioPerl constructor attributes where possible,
 which (in general) tends to mirror many natural data types such as features.
 
 Maybe something like:
- 
+
  # GFF directives
  $VAR = {
     'MODE'      => 'directive', # top level type
