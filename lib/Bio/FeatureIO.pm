@@ -270,7 +270,6 @@ use strict;
 use warnings;
 use Scalar::Util qw(blessed);
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
-use Config::Any;
 use Symbol;
 
 use base qw(Bio::Root::IO);
