@@ -129,10 +129,12 @@ sub feature_factory {
     if ($factory && $factory->isa('Bio::Factory::ObjectFactoryI')) {
         $self->{feature_factory} = $factory;
     }
-    $self->{feature_factory} ||= Bio::Factory::ObjectFactory->new(
-                            -type       => 'Bio::SeqFeature::Generic',
-                            -interface  => 'Bio::SeqFeatureI'
-    );
+    if (! defined $self->{feature_factory}) {
+        $self->{feature_factory} = Bio::Factory::ObjectFactory->new(
+                                -type       => 'Bio::SeqFeature::Generic',
+                                -interface  => 'Bio::SeqFeatureI'    );
+    }
+    $self->{feature_factory}
 }
 
 sub feature_class {
