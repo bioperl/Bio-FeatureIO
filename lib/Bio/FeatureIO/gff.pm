@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use 5.010;
 use base qw(Bio::FeatureIO);
-use Bio::FeatureIO::Handler::GenericFeatureHandler;
 
 use Bio::GFF3::LowLevel qw(
     gff3_format_feature
@@ -126,7 +125,9 @@ sub directive {
     my ($self, $directive, $rest) = @_;
     $rest ||= '';
     my %data;
-    given ($directive) {
+
+    # note this is allowing for expansion of additional directives
+    for ($directive) {
         # validate here?
         when ('sequence-region') {
             break if $self->ignore_seq_region();
