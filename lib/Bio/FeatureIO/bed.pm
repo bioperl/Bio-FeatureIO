@@ -1,73 +1,3 @@
-=pod
-
-=head1 NAME
-
-Bio::FeatureIO::bed - read/write features from UCSC BED format
-
-=head1 SYNOPSIS
-
-  my $in = Bio::FeatureIO->new(-format => 'bed', -file => 'file.bed');
-  for my $feat ($in->next_feature) {
-    # do something with $feat (a Bio::SeqFeature::Annotated object)
-  }
-
-  my $out = Bio::FeatureIO->new(-format=>'bed');
-  for my $feat ($seq->get_seqFeatures) {
-    $out->write_feature($feat);
-  }
-
-=head1 DESCRIPTION
-
-See L<http://www.genome.ucsc.edu/goldenPath/help/customTrack.html#BED>.
-
-Currently for read and write only the first 6 fields (chr, start, end, name,
-score, strand) are supported.
-
-=head1 FEEDBACK
-
-=head2 Mailing Lists
-
-User feedback is an integral part of the evolution of this and other
-Bioperl modules. Send your comments and suggestions preferably to
-the Bioperl mailing list.  Your participation is much appreciated.
-
-  bioperl-l@bioperl.org                  - General discussion
-  http://bioperl.org/wiki/Mailing_lists  - About the mailing lists
-
-=head2 Support 
-
-Please direct usage questions or support issues to the mailing list:
-
-I<bioperl-l@bioperl.org>
-
-rather than to the module maintainer directly. Many experienced and 
-reponsive experts will be able look at the problem and quickly 
-address it. Please include a thorough description of the problem 
-with code and data examples if at all possible.
-
-=head2 Reporting Bugs
-
-Report bugs to the Bioperl bug tracking system to help us keep track
-of the bugs and their resolution. Bug reports can be submitted via
-the web:
-
-  https://redmine.open-bio.org/projects/bioperl/
-
-=head1 AUTHOR - Allen Day
-
-Email allenday@ucla.edu
-
-=head1 CONTRIBUTORS
-
-Sendu Bala, bix@sendu.me.uk
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
-
-=cut
-
 # Let the code begin...
 
 package Bio::FeatureIO::bed;
@@ -266,3 +196,75 @@ sub write_feature {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Bio::FeatureIO::bed - read/write features from UCSC BED format
+
+=head1 SYNOPSIS
+
+  my $in = Bio::FeatureIO->new(-format => 'bed', -file => 'file.bed');
+  for my $feat ($in->next_feature) {
+    # do something with $feat (a Bio::SeqFeature::Annotated object)
+  }
+
+  my $out = Bio::FeatureIO->new(-format=>'bed');
+  for my $feat ($seq->get_seqFeatures) {
+    $out->write_feature($feat);
+  }
+
+=head1 DESCRIPTION
+
+See L<http://www.genome.ucsc.edu/goldenPath/help/customTrack.html#BED>.
+
+Currently for read and write only the first 6 fields (chr, start, end, name,
+score, strand) are supported.
+
+=head1 FEEDBACK
+
+=head2 Mailing Lists
+
+User feedback is an integral part of the evolution of this and other
+Bioperl modules. Send your comments and suggestions preferably to
+the Bioperl mailing list.  Your participation is much appreciated.
+
+  bioperl-l@bioperl.org                  - General discussion
+  http://bioperl.org/wiki/Mailing_lists  - About the mailing lists
+
+=head2 Support
+
+Please direct usage questions or support issues to the mailing list:
+
+I<bioperl-l@bioperl.org>
+
+rather than to the module maintainer directly. Many experienced and
+reponsive experts will be able look at the problem and quickly
+address it. Please include a thorough description of the problem
+with code and data examples if at all possible.
+
+=head2 Reporting Bugs
+
+Report bugs to the Bioperl bug tracking system to help us keep track
+of the bugs and their resolution. Bug reports can be submitted via
+the web:
+
+  https://redmine.open-bio.org/projects/bioperl/
+
+=head1 AUTHOR - Allen Day
+
+Email allenday@ucla.edu
+
+=head1 CONTRIBUTORS
+
+Sendu Bala, bix@sendu.me.uk
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with a _
+
+=cut

@@ -1,3 +1,22 @@
+# Let the code begin...
+
+package Bio::FeatureIO::gtf;
+use base qw(Bio::FeatureIO::gff);
+use strict;
+
+# Object preamble - inherits from Bio::Root::Root
+
+sub _initialize {
+    my($self,%arg) = @_;
+    $arg{-version} = 2.5;
+    $self->SUPER::_initialize(%arg);
+    return 1;
+}
+
+1;
+
+__END__
+
 # BioPerl module for Bio::FeatureIO::gtf
 #
 # Please direct questions and support issues to <bioperl-l@bioperl.org> 
@@ -65,20 +84,4 @@ Internal methods are usually preceded with a _
 =cut
 
 
-# Let the code begin...
 
-
-package Bio::FeatureIO::gtf;
-use base qw(Bio::FeatureIO::gff);
-use strict;
-
-# Object preamble - inherits from Bio::Root::Root
-
-sub _initialize {
-    my($self,%arg) = @_;
-    $arg{-version} = 2.5;
-    $self->SUPER::_initialize(%arg);
-    return 1;
-}
-
-1;
