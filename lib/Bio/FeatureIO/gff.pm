@@ -48,16 +48,15 @@ sub next_feature {
 sub next_dataset {
     my $self = shift;
 
-    my $unescape_func = {
+    state $unescape_func = {
         3 => \&gff3_unescape,
       }->{$self->version}
       || sub { $_[0] };
 
-    my $escape_func = {
+    state $escape_func = {
         3 => \&gff3_escape,
       }->{$self->version}
       || sub { $_[0] };
-
 
     local $/ = "\n";
     my $dataset;
