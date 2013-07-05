@@ -13,7 +13,7 @@ Bio::FeatureIO::ptt - read/write features in PTT format
    push @cds, $f if $f->strand > 0;
  }
 
- # write features (NOT IMPLEMENTED)
+ # write features
  my $fout = Bio::FeatureIO->new(-fh=>\*STDOUT, -format=>'ptt');
  for my $f (@cds) {
    $fout->write_feature($f);
