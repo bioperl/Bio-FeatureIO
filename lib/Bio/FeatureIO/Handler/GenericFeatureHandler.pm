@@ -2,10 +2,12 @@ package Bio::FeatureIO::Handler::GenericFeatureHandler;
 
 use base qw(Bio::Root::Root Bio::HandlerBaseI);
 
+use 5.010;
 use strict;
 use warnings;
 use Bio::Factory::ObjectFactory;
 use Bio::SeqIO;
+use Data::Dumper;
 
 my $ct = 0;
 my %GFF3_RESERVED_TAGS = map {$_ => $ct++ }
@@ -34,7 +36,12 @@ our $ID_HANDLER;
 
 sub new {
     my ($class, %args) = @_;
-    my $self = bless \%args, $class;
+    my %atts;
+    for my $k (keys %args) {
+        (my $newk = $k ) =~ s/^-//;
+        $atts{$newk} = $args{$k};
+    }
+    my $self = bless \%atts, $class;
     return $self;
 }
 
