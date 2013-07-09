@@ -36,11 +36,7 @@ our $ID_HANDLER;
 
 sub new {
     my ($class, %args) = @_;
-    my %atts;
-    for my $k (keys %args) {
-        (my $newk = $k ) =~ s/^-//;
-        $atts{$newk} = $args{$k};
-    }
+    my %atts = map {(my $newk = $_ ) =~ s/^-//; $newk => $args{$_} } keys %args;
     my $self = bless \%atts, $class;
     return $self;
 }
