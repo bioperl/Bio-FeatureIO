@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use 5.010;
 use base qw(Bio::FeatureIO);
-
 # TODO: work on integrating more of Rob's work here. Fewer points of failure,
 # the better...
 
@@ -48,6 +47,10 @@ sub next_feature {
 sub next_dataset {
     my $self = shift;
 
+    # Note: this simply allows for versions of escape/unescape functions TODO:
+    # needs to be made more stable and specifically versioned (only GFF3 seems
+    # to be supported)
+    
     state $unescape_func = {
         3 => \&gff3_unescape,
       }->{$self->version}
@@ -65,8 +68,8 @@ sub next_dataset {
     while (my $line = $self->_readline) {
         $len += CORE::length($line);
         for ($line) {
-            when (/^\s*$/) {  next GFFLINE  } # blank lines
-            when (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) { # comments and directives
+            if (/^\s*$/) {  next GFFLINE  } # blank lines
+            elsif (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) { # comments and directives
                 if (length($1) == 1) {
                     chomp $line;
                     @{$dataset}{qw(MODE DATA)} = ('comment', {DATA => $line});
@@ -76,13 +79,13 @@ sub next_dataset {
                         ('directive', $self->directive($2, $3));
                 }
             }
-            when (/^>/) {          # sequence
+            elsif (/^>/) {          # sequence
                 chomp $line;
                 @{$dataset}{qw(MODE DATA)} =
                     ('sequence', {'sequence-header' =>  $line});
                 $self->{mode} = 'sequence';
             }
-            when (/(?:\t[^\t]+){8}/)  {
+            elsif (/(?:\t[^\t]+){8}/)  {
                 chomp $line;
                 $self->{mode} = $dataset->{MODE} = 'feature';
                 my (%feat, %tags, $attstr);
@@ -100,7 +103,7 @@ sub next_dataset {
                 $feat{-tag} = \%tags;
                 $dataset->{DATA} = \%feat;
             }
-            default {
+            else {
                 if ($self->{mode} eq 'sequence') {
                     chomp $line;
                     @{$dataset}{qw(MODE DATA)} =
@@ -131,21 +134,21 @@ sub directive {
     # note this is allowing for expansion of additional directives
     for ($directive) {
         # validate here?
-        when ('sequence-region') {
+        if ($_ eq 'sequence-region') {
             next if $self->ignore_seq_region();
             @data{qw(type id start end)} =
                 ('sequence-region', split(/\s+/, $rest));
         }
-        when ('genome-build') {
+        elsif ('genome-build') {
             @data{qw(type source buildname)} = ($directive, split(/\s+/, $rest));
         }
-        when ('#') { 
+        elsif ('#') {
             $data{type} = 'resolve-references';
         }
-        when ('FASTA') {
+        elsif ('FASTA') {
             $data{type} = 'sequence';
         }
-        default {
+        else {
             @data{qw(type data)} = ($directive, $rest);
         }
     }
