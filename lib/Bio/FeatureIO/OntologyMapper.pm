@@ -1,4 +1,16 @@
-package Bio::FeatureIO::SequenceOntologyTypeMap;
+package Bio::FeatureIO::OntologyMapper;
+
+sub get_tagmap {
+    return
+    {
+        id => 'dc:identifier',
+        note => 'rdfs:comment',
+        name => 'rdfs:label',
+        alias => 'oboInOwl:hasRelatedSynonym',
+        Dbxref => 'rdfs:seeAlso',
+        
+    };
+}
 
 sub get_typemap {
     return 

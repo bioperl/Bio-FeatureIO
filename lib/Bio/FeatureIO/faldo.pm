@@ -4,15 +4,33 @@ use strict;
 use warnings;
 use 5.010;
 use base qw(Bio::FeatureIO);
-use Bio::FeatureIO::SequenceOntologyTypeMap;
+use Bio::FeatureIO::OntologyMapper;
 
 sub _initialize {
     my ($self, @args) = @_;
     $self->SUPER::_initialize(@args);
 
-    $self->{_typemap} = Bio::FeatureIO::SequenceOntologyTypeMap->get_typemap();
+    $self->{_typemap} = Bio::FeatureIO::OntologyMapper->get_typemap();
     $self->{_prefixmap_written} = {};
     
+
+}
+
+sub _prefixmap {
+    return 
+      (rdf => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+       rdfs => 'http://www.w3.org/2000/01/rdf-schema#',
+       xsd => 'http://www.w3.org/2001/XMLSchema#',
+       obo => 'http://purl.obolibrary.org/obo/',
+       faldo => 'http://biohackathon.org/resource/faldo#',
+       gff3 => 'http://sequenceontology.org/gff3/',
+       gff3a => 'http://sequenceontology.org/gff3/attributes/',  # TEMP area
+       oboInOwl => '"http://www.geneontology.org/formats/oboInOwl#',
+       dc => 'http://purl.org/dc/terms/',
+       part_of => 'http://purl.obolibrary.org/obo/BFO_0000050',   # TODO - check FALDO standard. RO vs SIO.
+       sio => 'http://semanticscience.org/resource/SIO_',
+       uniprotcore => 'http://purl.uniprot.org/core/',
+      );
 
 }
 
@@ -60,17 +78,24 @@ sub _write_feature_with_parent {
         : 'BothStrandsPosition';
     $strand = "faldo:$strand";
 
+    my $reference = $self->_id_to_uri($f->seq_id);
+
     # begin and end
     my $begin_obj = $self->_skolem($uri, 'b');
     my $end_obj = $self->_skolem($uri, 'e');
     $self->_write_triple($begin_obj, 'rdf:type', 'faldo:ExactPosition');
     $self->_write_triple($begin_obj, 'rdf:type', $strand);
     $self->_write_triple($begin_obj, 'faldo:position', _xsd( int=> $f->start ));
+    $self->_write_triple($begin_obj, 'faldo:reference', $reference);
     $self->_write_triple($end_obj, 'rdf:type', 'faldo:ExactPosition');
     $self->_write_triple($end_obj, 'rdf:type', $strand);
     $self->_write_triple($end_obj, 'faldo:position', _xsd( int=> $f->end ));
+    $self->_write_triple($end_obj, 'faldo:reference', $reference);
     $self->_write_triple($uri, 'faldo:begin', $begin_obj);
     $self->_write_triple($uri, 'faldo:end', $end_obj);
+    
+        
+    #source => $f->source_tag,
 
     if ($parent) {
         my ($parent_id) = $parent->get_tag_values('ID');
@@ -80,10 +105,57 @@ sub _write_feature_with_parent {
         $self->_write_triple($uri, 'part_of:', $self->_id_to_uri($parent_id));
     }
 
-    $self->_print("\n");
-    
-    
+    # translate col9 (attributes) into triples
+    foreach my $tag ( $f->get_all_tags ) {
+        my ($p, $typefunc) = $self->_get_property_and_typefunc_for_tag($tag);
+
+        # Note: order info will be lost; in future we may want a metadata tag for ordered properties
+        my @vals = $f->get_tag_values( $tag );
+        foreach my $v (@vals) {
+            
+            if ($tag eq 'Ontology_term') {
+                $v =~ s/^(\S+):/obo:$1_/;
+                # TODO - coordinate on model; avoid falling into OWL-Full
+                $self->_write_triple($uri, 
+                                     'uniprotcore:classifiedWith', 
+                                     $v);
+                next;
+                                     
+            }
+
+            my $v_concrete = $v;
+            if ($typefunc) {
+                $v_concrete = $typefunc->($v);
+            }
+            else {
+                if ($v =~ m@^[\-]?(\d+)@) {
+                    $v_concrete = _xsd( int => $v );
+                }
+                elsif ($v =~ m@^[\-]?(\d+)\.\d+@) {
+                    $v_concrete = _xsd( float => $v );
+                }
+                else {
+                    $v_concrete = _quotify($v);
+                }
+            }
+            $self->_write_triple($uri, $p, $v_concrete);
+        }
+    }
+
+
+    $self->_print("\n");    
 }
+
+
+sub _get_property_and_typefunc_for_tag {
+    my ($self, $tag) = @_;
+    my $p = Bio::FeatureIO::OntologyMapper->get_tagmap->{lc($tag)};
+    if ($p) {
+        return ($p, \&_quotify );
+    }
+    return ("gff3a:$tag");
+}
+
 
 sub _faldo3_lowlevel_hashref {
     my ( $self, $f, $parent ) = @_;
@@ -160,10 +232,16 @@ sub _skolem {
     }
 }
 
+sub _quotify {
+    my ($v) = @_;
+    $v =~ s/\"/\\\"/g; # TODO - check this against TTL grammar
+    return '"'.$v.'"';
+}
+
 sub _xsd {
     my ($t,$v) = @_;
     $v =~ s/\"/\\\"/g; # TODO - check this against TTL grammar
-    return '"'.$v.'"^^xsd:'.$t;
+    return _quotify($v).'^^xsd:'.$t;
 }
 
 # we assume the arguments have already been translated to ttl
@@ -179,17 +257,6 @@ sub _uri {
     return "$obj";
 }
 
-sub _prefixmap {
-    return 
-      (rdf => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-       rdfs => 'http://www.w3.org/2000/01/rdf-schema#',
-       xsd => 'http://www.w3.org/2001/XMLSchema#',
-       obo => 'http://purl.obolibrary.org/obo/',
-       faldo => 'http://biohackathon.org/resource/faldo#',
-       part_of => 'http://purl.obolibrary.org/obo/BFO_0000050',
-      );
-
-}
 
 sub write_ttl_header {
     my ($self) = @_;
@@ -287,8 +354,11 @@ Based on gff.pm, by:
 
 =head1 TODO
 
-  Fuzzy positions
-  
+ - Fuzzy positions
+ - Agree on vocabulary for gff3 attributes
+ - Agree on model for Ontology_term
+
+More broadly: try and standardize wider set of attributes used in GFF3, provide standard RDF vocab or OBO library mappings
 
 =cut
     
