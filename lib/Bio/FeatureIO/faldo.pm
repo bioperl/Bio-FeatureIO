@@ -80,20 +80,28 @@ sub _write_feature_with_parent {
 
     my $reference = $self->_id_to_uri($f->seq_id);
 
-    # begin and end
-    my $begin_obj = $self->_skolem($uri, 'b');
-    my $end_obj = $self->_skolem($uri, 'e');
-    $self->_write_triple($begin_obj, 'rdf:type', 'faldo:ExactPosition');
-    $self->_write_triple($begin_obj, 'rdf:type', $strand);
-    $self->_write_triple($begin_obj, 'faldo:position', _xsd( int=> $f->start ));
-    $self->_write_triple($begin_obj, 'faldo:reference', $reference);
-    $self->_write_triple($end_obj, 'rdf:type', 'faldo:ExactPosition');
-    $self->_write_triple($end_obj, 'rdf:type', $strand);
-    $self->_write_triple($end_obj, 'faldo:position', _xsd( int=> $f->end ));
-    $self->_write_triple($end_obj, 'faldo:reference', $reference);
-    $self->_write_triple($uri, 'faldo:begin', $begin_obj);
-    $self->_write_triple($uri, 'faldo:end', $end_obj);
-    
+    # location object. In bioperl a feature can be split over multiple locations, or it
+    # can have multiple locations. For now we assume a basic GFF like model where every
+    # feature has a single location, so we create a single location object
+    my @locs = ($self->_skolem($uri, 'loc'));
+    foreach my $loc (@locs) {
+        $self->_write_triple($uri, 'faldo:location', $loc);
+        $self->_write_triple($loc, 'rdf:type', 'faldo:Region');
+
+        # begin and end
+        my $begin_obj = $self->_skolem($loc, 'b');
+        my $end_obj = $self->_skolem($loc, 'e');
+        $self->_write_triple($loc, 'faldo:begin', $begin_obj);
+        $self->_write_triple($loc, 'faldo:end', $end_obj);
+        $self->_write_triple($begin_obj, 'rdf:type', 'faldo:ExactPosition');
+        $self->_write_triple($begin_obj, 'rdf:type', $strand);
+        $self->_write_triple($begin_obj, 'faldo:position', _xsd( int=> $f->start ));
+        $self->_write_triple($begin_obj, 'faldo:reference', $reference);
+        $self->_write_triple($end_obj, 'rdf:type', 'faldo:ExactPosition');
+        $self->_write_triple($end_obj, 'rdf:type', $strand);
+        $self->_write_triple($end_obj, 'faldo:position', _xsd( int=> $f->end ));
+        $self->_write_triple($end_obj, 'faldo:reference', $reference);
+    }
         
     #source => $f->source_tag,
 
@@ -355,6 +363,7 @@ Based on gff.pm, by:
 =head1 TODO
 
  - Fuzzy positions
+ - Agree on URI naming conventions for injected nodes (location, begin, end)
  - Agree on vocabulary for gff3 attributes
  - Agree on model for Ontology_term
 
