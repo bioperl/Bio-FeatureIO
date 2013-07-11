@@ -55,23 +55,69 @@ sub _write_feature_with_parent {
     my $uri = $self->_id_to_uri($id);
     $self->_write_triple($uri, 'rdf:type', $self->_so($f->primary_tag));
 
+    my $strand =
+        $f->strand ? $f->strand == 1 ? 'ForwardStrandPosition' : 'NegativeStrandPosition' 
+        : 'BothStrandsPosition';
+    $strand = "faldo:$strand";
+
     # begin and end
     my $begin_obj = $self->_skolem($uri, 'b');
     my $end_obj = $self->_skolem($uri, 'e');
     $self->_write_triple($begin_obj, 'rdf:type', 'faldo:ExactPosition');
+    $self->_write_triple($begin_obj, 'rdf:type', $strand);
     $self->_write_triple($begin_obj, 'faldo:position', _xsd( int=> $f->start ));
     $self->_write_triple($end_obj, 'rdf:type', 'faldo:ExactPosition');
+    $self->_write_triple($end_obj, 'rdf:type', $strand);
     $self->_write_triple($end_obj, 'faldo:position', _xsd( int=> $f->end ));
     $self->_write_triple($uri, 'faldo:begin', $begin_obj);
     $self->_write_triple($uri, 'faldo:end', $end_obj);
 
     if ($parent) {
-        # TODO
+        my ($parent_id) = $parent->get_tag_values('ID');
+        if (!$parent_id) {
+            $self->throw("feature ".($parent->display_name||'(no display name)')." has subfeatures but no 'ID' tag, cannot write as FALDO3");
+        }
+        $self->_write_triple($uri, 'part_of:', $self->_id_to_uri($parent_id));
     }
 
     $self->_print("\n");
     
     
+}
+
+sub _faldo3_lowlevel_hashref {
+    my ( $self, $f, $parent ) = @_;
+
+    my @tags = $f->get_all_tags;
+    if( $f->can('phase') ) {
+        @tags = grep $_ ne 'phase', @tags;
+    }
+
+    if( $parent && ! $parent->has_tag('ID') ) {
+        $self->throw("feature ".($parent->display_name||'(no display name)')." has subfeatures but no 'ID' tag, cannot write as FALDO3");
+    }
+    my $parent_id = $parent ? ($parent->get_tag_values('ID'))[0] : ();
+
+    return {
+        seq_id => $f->seq_id,
+        source => $f->source_tag,
+        type   => $f->primary_tag,
+        start  => $f->start,
+        end    => $f->end,
+        score  => $f->score,
+        strand => ( $f->strand ? $f->strand == 1 ? '+' : '-'
+                                : undef
+                  ),
+        phase  => ($f->can('phase') ? $f->phase : undef ),
+        attributes => {
+            ( map {
+                my $tag = $_;
+                $tag => [ $f->get_tag_values( $tag ) ]
+              } @tags,
+            ),
+            ( $parent_id ? ( Parent => [ $parent_id ] ) : () ),
+          },
+    };
 }
 
 sub _so {
@@ -140,6 +186,7 @@ sub _prefixmap {
        xsd => 'http://www.w3.org/2001/XMLSchema#',
        obo => 'http://purl.obolibrary.org/obo/',
        faldo => 'http://biohackathon.org/resource/faldo#',
+       part_of => 'http://purl.obolibrary.org/obo/BFO_0000050',
       );
 
 }
@@ -171,46 +218,6 @@ sub _write_prefix_declaration {
     $self->{_prefixmap_written}->{$k} = $v;
 }
 
-sub _write_feature_3 {
-    my ( $self, $feature, $parent_feature ) = @_;
-
-
-}
-
-sub _faldo3_lowlevel_hashref {
-    my ( $self, $f, $parent ) = @_;
-
-    my @tags = $f->get_all_tags;
-    if( $f->can('phase') ) {
-        @tags = grep $_ ne 'phase', @tags;
-    }
-
-    if( $parent && ! $parent->has_tag('ID') ) {
-        $self->throw("feature ".($parent->display_name||'(no display name)')." has subfeatures but no 'ID' tag, cannot write as FALDO3");
-    }
-    my $parent_id = $parent ? ($parent->get_tag_values('ID'))[0] : ();
-
-    return {
-        seq_id => $f->seq_id,
-        source => $f->source_tag,
-        type   => $f->primary_tag,
-        start  => $f->start,
-        end    => $f->end,
-        score  => $f->score,
-        strand => ( $f->strand ? $f->strand == 1 ? '+' : '-'
-                                : undef
-                  ),
-        phase  => ($f->can('phase') ? $f->phase : undef ),
-        attributes => {
-            ( map {
-                my $tag = $_;
-                $tag => [ $f->get_tag_values( $tag ) ]
-              } @tags,
-            ),
-            ( $parent_id ? ( Parent => [ $parent_id ] ) : () ),
-          },
-    };
-}
 
 1;
 
@@ -233,6 +240,9 @@ Bio::FeatureIO::faldo - read/write FALDO feature files
 
 This is a write for FALDO. Parsing is not yet implemented.
 
+For more information in FALDO, see
+
+  http://github.com/JervenBolleman/FALDO
 
 =head1 FEEDBACK
 
@@ -266,58 +276,19 @@ the web:
 
 =head1 AUTHORS
 
+ Chrus Mungall, <cjm at bioperl dot org>
+
+Based on gff.pm, by:
+
  Chris Fields, <cjfields at bioperl dot org>
  Robert Buels, <rbuels at cpan dot org>
-
-Refactored from the original work by:
-
  Allen Day, <allenday@ucla.edu>
 
-=head1 CONTRIBUTORS
 
- Steffen Grossmann, <grossman@molgen.mpg.de>
- Scott Cain, <scain@cpan.org>
- Rob Edwards <rob@salmonella.org>
+=head1 TODO
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
-
-=head2 next_feature()
-
- Usage   : my $feature = $featureio->next_feature();
- Function: reads a feature record from a FALDO stream and returns it as an object.
- Returns : a Bio::SeqFeature::Annotated object
- Args    : N/A
-
-=head2 next_feature_group
-
- Usage   : @feature_group = $stream->next_feature_group
- Function: Reads the next feature_group from $stream and returns it.
-
-           Feature groups in FALDO3 files are separated by '###' directives. The
-           features in a group might form a hierarchical structure. The
-           complete hierarchy of features is returned, i.e. the returned array
-           represents only the top-level features.  Lower-level features can
-           be accessed using the 'get_SeqFeatures' method recursively.
-
- Example : # getting the complete hierarchy of features in a FALDO3 file
-           my @toplevel_features;
-           while (my @fg = $stream->next_feature_group) {
-               push(@toplevel_features, @fg);
-           }
- Returns : an array of Bio::SeqFeature::Annotated objects
- Args    : none
-
-=head2 next_seq()
-
-  Usage   : $featureio->next_seq( );
-  Function: access the FASTA section (if any) at the end of the FALDO stream. Note
-            that this method will return undef before all the features in the FALDO
-            stream have been handled.
-  Returns : a Bio::SeqI object or undef
-  Args    : none
+  Fuzzy positions
+  
 
 =cut
     
