@@ -29,15 +29,14 @@ for my $modifier ( sub {}, sub { $_[0]->remove_tag('Parent') if $_[0]->has_tag('
         -version => 3,
       );
 
+    # we just 'trust' the output for now - we have no faldo reader
     ok( $out );
     while ( my @f = $io->next_feature_group ) {
         $modifier->($_) for @f, map $_->get_SeqFeatures, @f;
         $out->write_feature($_) for @f;
     }
     print $out_faldo;
-    open(F,">/tmp/test.ttl");
-    print F $out_faldo;
-    close(F);
+    
 
 }
 done_testing();
