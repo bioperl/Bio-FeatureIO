@@ -61,12 +61,26 @@ sub next_dataset {
       }->{$self->version}
       || sub { $_[0] };
 
+    # In Windows, text files have '\r\n' as line separator, but when reading in
+    # text mode Perl will only show the '\n'. This means that for a line "ABC\r\n",
+    # "length $_" will report 4 although the line is 5 bytes in length.
+    # We assume that all lines have the same line separator and only read current line.
+    my $fh         = $self->_fh;
+    my $init_pos   = tell($fh);
+    my $init_line  = $.;
+    my $curr_line  = <$fh>;
+    my $pos_diff   = tell($fh) - $init_pos;
+    # If position difference is 0, cursor is already at the end of the file
+    my $correction = ($pos_diff > 0) ? ($pos_diff - length $curr_line) : 0;
+    $fh->input_line_number($init_line); # Rewind line number $.
+    seek $fh, $init_pos, 0;             # Rewind position to proceed to read the file
+
     local $/ = "\n";
     my $dataset;
     my $len = 0;
     GFFLINE:
     while (my $line = $self->_readline) {
-        $len += CORE::length($line);
+        $len += CORE::length($line) + $correction;
         for ($line) {
             if (/^\s*$/) {  next GFFLINE  } # blank lines
             elsif (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) { # comments and directives
