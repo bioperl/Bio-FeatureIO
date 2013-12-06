@@ -8,7 +8,7 @@ BEGIN {
     use Bio::Root::Test;
     
     test_begin(
-        -tests => 40, 
+        -tests => 42,
         -requires_modules => [qw(URI::Escape Graph::Directed)],
         -requires_networking => 1
     );
