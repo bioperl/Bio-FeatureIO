@@ -108,8 +108,8 @@ sub reset_parameters {
 
 sub file_handle {
     my ($self, $fh) = @_;
-    return $self->{-fh} = $fh if $fh;
-    return $self->{-fh};
+    return $self->{fh} = $fh if $fh;
+    return $self->{fh};
 }
 
 # GFF3-specific convenience methods
