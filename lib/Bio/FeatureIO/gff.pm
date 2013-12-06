@@ -153,13 +153,13 @@ sub directive {
             @data{qw(type id start end)} =
                 ('sequence-region', split(/\s+/, $rest));
         }
-        elsif ('genome-build') {
+        elsif ($_ eq 'genome-build') {
             @data{qw(type source buildname)} = ($directive, split(/\s+/, $rest));
         }
-        elsif ('#') {
+        elsif ($_ eq '#') {
             $data{type} = 'resolve-references';
         }
-        elsif ('FASTA') {
+        elsif ($_ eq 'FASTA') {
             $data{type} = 'sequence';
         }
         else {
