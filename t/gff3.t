@@ -3,13 +3,16 @@
 
 use strict;
 use warnings;
-use lib './inc';
-use Bio::Root::Test;
-use Bio::FeatureIO;
 
-use Bio::GFF3::LowLevel 'gff3_parse_feature';
+BEGIN {
+    use lib './inc';
+    use Bio::Root::Test;
+    use Bio::FeatureIO;
+    use Bio::GFF3::LowLevel 'gff3_parse_feature';
+    use IO::String;
 
-use IO::String;
+    test_begin(-tests => 148);
+}
 
 # this is mainly GFF3-specific, GFF2/GTF to be added
 

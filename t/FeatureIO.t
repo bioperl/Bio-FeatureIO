@@ -3,15 +3,20 @@
 
 use strict;
 use warnings;
-use lib './inc';
-use Bio::Root::Test;
 
-use_ok($_) for qw(
-    Bio::FeatureIO
-    Bio::FeatureIO::gff
-    Bio::FeatureIO::ptt
-    Bio::FeatureIO::vecscreen_simple
-);
+BEGIN {
+    use lib './inc';
+    use Bio::Root::Test;
+
+    test_begin(-tests => 4);
+
+    use_ok($_) for qw(
+        Bio::FeatureIO
+        Bio::FeatureIO::gff
+        Bio::FeatureIO::ptt
+        Bio::FeatureIO::vecscreen_simple
+    );
+}
 
 done_testing();
 

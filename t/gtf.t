@@ -1,8 +1,13 @@
 use strict;
 use warnings;
-use lib './inc';
-use Bio::Root::Test;
-use Bio::FeatureIO;
+
+BEGIN {
+    use lib './inc';
+    use Bio::Root::Test;
+    use Bio::FeatureIO;
+
+    test_begin( -tests => 9);
+}
 
 # this is mainly GFF3-specific, GFF2/GTF to be added
 
@@ -56,4 +61,3 @@ while($f = $io->next_feature()){
 is($fcount, 81);
 
 done_testing();
-

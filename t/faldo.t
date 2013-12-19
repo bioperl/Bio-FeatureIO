@@ -3,14 +3,16 @@
 
 use strict;
 use warnings;
-use lib './inc';
-use Bio::Root::Test;
-use Bio::FeatureIO;
 
-use Bio::GFF3::LowLevel 'gff3_parse_feature';
+BEGIN {
+    use lib './inc';
+    use Bio::Root::Test;
+    use Bio::FeatureIO;
+    use Bio::GFF3::LowLevel 'gff3_parse_feature';
+    use IO::String;
 
-use IO::String;
-
+    test_begin(-tests => 4);
+}
 
 my ($io, $f, $s, $fcount, $scount);
 
@@ -41,4 +43,3 @@ for my $modifier ( sub {}, sub { $_[0]->remove_tag('Parent') if $_[0]->has_tag('
 }
 done_testing();
 exit;
-
