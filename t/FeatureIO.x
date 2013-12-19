@@ -63,11 +63,11 @@ while($f = $io->next_feature()){
 }
 is($fcount, 15);
 
-#then try to read sequences again.  should still be undef
+#then try to read sequences again.
 while($s = $io->next_seq()){
   $scount++;
 }
-is($scount,0);
+is($scount,1);
 
 ################################################################################
 #
@@ -152,7 +152,7 @@ is($scount , 0);
 $f = $io->next_feature_group();
 is($f , 1);
 $f = $io->next_feature_group();
-is($f , 0);
+is($f , undef);
 
 #then try to read sequences again.
 while($s = $io->next_seq()){
@@ -179,12 +179,12 @@ while (my $f = $ptt_in->next_feature) {
     is( $f->start , 2491 );
     is( $f->end , 3423 );
     cmp_ok( $f->strand, '>', 0 );
-    is( ($f->get_tag_values('PID'))[0],'24217063' );
-    is( ($f->get_tag_values('Gene'))[0], 'metF' );
-    is( ($f->get_tag_values('Synonym'))[0], 'LB002' );
     ok( ! $f->has_tag('Code') );
-    is( ($f->get_tag_values('COG'))[0],'COG0685E' );
-    is( ($f->get_tag_values('Product'))[0], '5,10-methylenetetrahydrofolate reductase' );   
+    is( $f->display_name, 'metF' );
+    is( ($f->get_tag_values('ID'))[0],'24217063' );
+    is( ($f->get_tag_values('Alias'))[0], 'LB002' );
+    is( ($f->get_tag_values('cog'))[0],'COG0685E' );
+    is( ($f->get_tag_values('product'))[0], '5,10-methylenetetrahydrofolate reductase' );
   }
 }
 is($fcount , 367);
