@@ -24,6 +24,27 @@ sub _initialize {
     $version ||= 3;
     $self->version($version);
     # set globals using config if present, then defaults based on version
+
+    # In Windows, text files have '\r\n' as line separator, but when reading in
+    # text mode Perl will only show the '\n'. This means that for a line "ABC\r\n",
+    # "length $_" will report 4 although the line is 5 bytes in length.
+    # We assume that all lines have the same line separator and only read current line.
+    my $fh         = $self->_fh;
+    my $init_pos   = tell($fh);
+    my $init_line  = $.;
+    my $curr_line  = <$fh> || '';
+       $curr_line =~ s/\n$//;
+       $curr_line =~ s/\r$//;
+    my $pos_diff   = tell($fh) - $init_pos;
+    # If position difference is 0, cursor is already at the end of the file
+    # and can't calculate termination length directly, so use a default of 1
+    my $termination_length = ($pos_diff > 0) ? ($pos_diff - length $curr_line) : 1;
+
+    $fh->input_line_number($init_line); # Rewind line number $.
+    seek $fh, $init_pos, 0;             # Rewind position to proceed to read the file
+
+    # Establish line ending length
+    $self->{termination_length} = $termination_length;
 }
 
 # raw feature stream; returned features are as-is, may be modified post-return
@@ -61,31 +82,19 @@ sub next_dataset {
       }->{$self->version}
       || sub { $_[0] };
 
-    # In Windows, text files have '\r\n' as line separator, but when reading in
-    # text mode Perl will only show the '\n'. This means that for a line "ABC\r\n",
-    # "length $_" will report 4 although the line is 5 bytes in length.
-    # We assume that all lines have the same line separator and only read current line.
-    my $fh         = $self->_fh;
-    my $init_pos   = tell($fh);
-    my $init_line  = $.;
-    my $curr_line  = <$fh>;
-    my $pos_diff   = tell($fh) - $init_pos;
-    # If position difference is 0, cursor is already at the end of the file
-    my $correction = ($pos_diff > 0) ? ($pos_diff - length $curr_line) : 0;
-    $fh->input_line_number($init_line); # Rewind line number $.
-    seek $fh, $init_pos, 0;             # Rewind position to proceed to read the file
-
     local $/ = "\n";
     my $dataset;
     my $len = 0;
     GFFLINE:
     while (my $line = $self->_readline) {
-        $len += CORE::length($line) + $correction;
+        $line =~ s/\n$//;
+        $line =~ s/\r$//;
+
+        $len += CORE::length($line) + $self->{termination_length};
         for ($line) {
             if (/^\s*$/) {  next GFFLINE  } # blank lines
-            elsif (/^(\#{1,2})\s*(\S+)\s*([^\n]+)?$/) { # comments and directives
+            elsif (/^(\#{1,2})\s*(\S+)\s*(.+)?$/) { # comments and directives
                 if (length($1) == 1) {
-                    chomp $line;
                     @{$dataset}{qw(MODE DATA)} = ('comment', {DATA => $line});
                 } else {
                     $self->{mode} = 'directive';
@@ -94,13 +103,11 @@ sub next_dataset {
                 }
             }
             elsif (/^>/) {          # sequence
-                chomp $line;
                 @{$dataset}{qw(MODE DATA)} =
                     ('sequence', {'sequence-header' =>  $line});
                 $self->{mode} = 'sequence';
             }
             elsif (/(?:\t[^\t]+){8}/)  {
-                chomp $line;
                 $self->{mode} = $dataset->{MODE} = 'feature';
                 my (%feat, %tags, $attstr);
                 # validate here?
@@ -119,7 +126,6 @@ sub next_dataset {
             }
             else {
                 if ($self->{mode} eq 'sequence') {
-                    chomp $line;
                     @{$dataset}{qw(MODE DATA)} =
                         ('sequence', {sequence => $line});
                 } else {
