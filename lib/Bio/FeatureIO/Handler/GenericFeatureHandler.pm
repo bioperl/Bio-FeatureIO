@@ -134,7 +134,7 @@ sub feature_factory {
     }
     if (! defined $self->{feature_factory}) {
         $self->{feature_factory} = Bio::Factory::ObjectFactory->new(
-                                -type       => 'Bio::SeqFeature::Generic',
+                                -type       => $self->feature_class,
                                 -interface  => 'Bio::SeqFeatureI'    );
     }
     $self->{feature_factory}
@@ -142,8 +142,8 @@ sub feature_factory {
 
 sub feature_class {
     my $self = shift;
-    return $self->{-feature_class} = shift if @_;
-    $self->{-feature_class} || 'Bio::SeqFeature::Generic';
+    return $self->{feature_class} = shift if @_;
+    $self->{feature_class} || 'Bio::SeqFeature::Generic';
 }
 
 ################ HANDLERS ################

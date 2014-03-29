@@ -4,8 +4,11 @@ use strict;
 use warnings;
 use 5.010;
 use base qw(Bio::FeatureIO);
+
 # TODO: work on integrating more of Rob's work here. Fewer points of failure,
 # the better...
+
+# TODO TODO: Look at GAL (Barry Moore's library) as well
 
 use Bio::GFF3::LowLevel qw(
     gff3_format_feature
