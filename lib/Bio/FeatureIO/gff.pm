@@ -135,13 +135,12 @@ sub _initialize {
 sub next_feature {
   my $self = shift;
   my $gff_string;
+  return if $self->fasta_mode();
 
   my($f) = $self->_buffer_feature();
   if($f){
     return $f;
   }
-
-  return if $self->fasta_mode();
 
   # be graceful about empty lines or comments, and make sure we return undef
   # if the input is consumed
@@ -155,7 +154,18 @@ sub next_feature {
 
   # looks like we went into FASTA mode without a directive.
   if($gff_string =~ /^>/){
-    $self->_pushback($gff_string);
+    
+    my $pos = tell($self->_fh);
+    
+    # TODO: SeqIO::fasta uses _fh directly, whereas _pushback uses an in-memory
+    # buffer; this completely breaks with piped data, so fix for files and punt
+    # on the rest for now
+    
+    if ($pos >= 0) {
+      seek($self->_fh, -length($gff_string), 1);
+    } else {
+      $self->_pushback($gff_string);
+    }
     $self->fasta_mode(1);
     return;
   }
