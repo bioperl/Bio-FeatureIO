@@ -9,7 +9,7 @@ use Module::Build;
 
 my $build = Module::Build->new(
     dist_name            => 'Bio::FeatureIO',
-    dist_version         => '0.01',
+    dist_version         => '1.6',
     module_name          => 'Bio::FeatureIO',
     dist_author          => 'BioPerl Team <bioperl-l@bioperl.org>',
     dist_abstract        => 'Bio::FeatureIO - modules for reading and writing sequence features',
