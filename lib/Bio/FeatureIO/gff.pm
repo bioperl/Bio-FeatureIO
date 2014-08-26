@@ -816,7 +816,7 @@ Gets/sets the organims from the organism directive
 
 sub organism {
     my $self = shift;
-    my $organism = shift if defined(@_);
+    my $organism = shift if @_;
     return $self->{'organism'} = $organism if defined($organism);
     return $self->{'organism'};
 }
