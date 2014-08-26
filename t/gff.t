@@ -55,11 +55,13 @@ is($scount,0);
 while($f = $io->next_feature()) {
     $fcount++;
     if ($fcount == 1) {
+	isa_ok($f, 'Bio::SeqFeatureI');
+	isa_ok($f, 'Bio::SeqFeature::Annotated');
         is($f->primary_tag, 'mRNA');
         is($f->primary_id, 'A00469');
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, '.');        
         is($f->start, 62467934);
         is($f->end, 62469545);
         is($f->strand, -1);
@@ -68,7 +70,7 @@ while($f = $io->next_feature()) {
         is($f->primary_id, undef);  # no ID attribute
         is($f->seq_id, 'chr9');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, '.');        
         is($f->start, 90517946);
         is($f->end, 90518841);
         is($f->strand, -1);
@@ -114,7 +116,7 @@ while($f = $io->next_feature()){
         is($f->primary_id, 'A00469');
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, '.');        
         is($f->start, 62467934);
         is($f->end, 62469545);
         is($f->strand, -1);
@@ -123,7 +125,7 @@ while($f = $io->next_feature()){
         is($f->primary_id, undef);
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, '.');        
         is($f->start, 62469076);
         is($f->end, 62469236);
         is($f->strand, -1);
@@ -166,7 +168,7 @@ while($f = $io->next_feature()){
         is($f->primary_id, 'A00469');
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, '.');        
         is($f->start, 62467934);
         is($f->end, 62469545);
         is($f->strand, -1);
@@ -175,7 +177,7 @@ while($f = $io->next_feature()){
         is($f->primary_id, undef);
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, '.');        
         is($f->start, 62469076);
         is($f->end, 62469236);
         is($f->strand, -1);
@@ -211,7 +213,7 @@ while($f = $io->next_feature()){
         is($f->primary_id, undef);
         is($f->seq_id, 'foo');
         is($f->source_tag, undef);
-        is($f->score, undef);
+        is($f->score, '.');
         is($f->start, 1);
         is($f->end, 100);
         is($f->strand, 1);
