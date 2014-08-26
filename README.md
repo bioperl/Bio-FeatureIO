@@ -17,8 +17,8 @@ To install this module type the following:
 Beyond the core BioPerl distribution, this module requires these other modules
 and libraries:
 
-  (URI::Escape)[https://metacpan.org/pod/URI::Escape] - for Bio::FeatureIO::gff
-  (XML::DOM::XPath)[https://metacpan.org/pod/XML::DOM::XPath] - for Bio::FeatureIO::interpro
+* [URI::Escape](https://metacpan.org/pod/URI::Escape) - for Bio::FeatureIO::gff
+* [XML::DOM::XPath](https://metacpan.org/pod/XML::DOM::XPath) - for Bio::FeatureIO::interpro
 
 COPYRIGHT AND LICENCE
 
