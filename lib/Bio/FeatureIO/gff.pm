@@ -135,12 +135,13 @@ sub _initialize {
 sub next_feature {
   my $self = shift;
   my $gff_string;
-  return if $self->fasta_mode();
 
   my($f) = $self->_buffer_feature();
   if($f){
     return $f;
   }
+
+  return if $self->fasta_mode();
 
   # be graceful about empty lines or comments, and make sure we return undef
   # if the input is consumed
@@ -174,8 +175,7 @@ sub next_feature {
   # got a directive
   elsif($gff_string =~ /^##/){
     $self->_handle_directive($gff_string);
-    # recurse down to  the next line.  this will bottom out on finding a real feature or EOF
-    return $self->next_feature();
+    return $self->_buffer_feature();
   }
 
   # got a feature
@@ -488,6 +488,7 @@ sub _handle_directive {
     $f->seq_id( $arg[0] );
     $f->start(  $arg[1] );
     $f->end(    $arg[2] );
+    $f->strand(1);
 
     $f->type(   $fta    );
 
