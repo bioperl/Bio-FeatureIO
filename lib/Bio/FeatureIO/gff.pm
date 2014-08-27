@@ -164,6 +164,7 @@ sub next_feature {
     if ($pos >= 0) {
       seek($self->_fh, -length($gff_string), 1);
     } else {
+      $self->warn("In-line parsing of FASTA not yet supported");
       $self->_pushback($gff_string);
     }
     $self->fasta_mode(1);
