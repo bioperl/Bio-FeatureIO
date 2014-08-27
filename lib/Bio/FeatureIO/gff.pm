@@ -137,11 +137,6 @@ sub next_feature {
   my $gff_string;
   return if $self->fasta_mode();
 
-  my($f) = $self->_buffer_feature();
-  if($f){
-    return $f;
-  }
-
   # be graceful about empty lines or comments, and make sure we return undef
   # if the input is consumed
   while(($gff_string = $self->_readline()) && defined($gff_string)) {
@@ -157,9 +152,9 @@ sub next_feature {
     
     my $pos = tell($self->_fh);
     
-    # TODO: SeqIO::fasta uses _fh directly, whereas _pushback uses an in-memory
-    # buffer; this completely breaks with piped data, so fix for files and punt
-    # on the rest for now
+    # TODO: Bio::SeqIO::fasta uses _fh directly and not _readline, whereas _pushback
+    # uses an in-memory buffer (accessible via _readline but not _fh). This completely
+    # breaks with piped data, so fix for files and punt on the rest for now
     
     if ($pos >= 0) {
       seek($self->_fh, -length($gff_string), 1);
@@ -173,9 +168,9 @@ sub next_feature {
 
   # got a directive
   elsif($gff_string =~ /^##/){
-    $self->_handle_directive($gff_string);
+    my $f = $self->_handle_directive($gff_string);
     # recurse down to  the next line.  this will bottom out on finding a real feature or EOF
-    return $self->next_feature();
+    return $f;
   }
 
   # got a feature
@@ -439,20 +434,20 @@ sub version {
 
 =cut
 
-sub _buffer_feature {
-  my ($self,$f) = @_;
-
-  if ( $f ) {
-    push @{ $self->{'buffer'} }, $f;
-    return $f;
-  }
-  elsif ( $self->{'buffer'} ) {
-    return shift @{ $self->{'buffer'} };
-  }
-  else {
-    return;
-  }
-}
+#sub _buffer_feature {
+#  my ($self,$f) = @_;
+#
+#  if ( $f ) {
+#    push @{ $self->{'buffer'} }, $f;
+#    return $f;
+#  }
+#  elsif ( $self->{'buffer'} ) {
+#    return shift @{ $self->{'buffer'} };
+#  }
+#  else {
+#    return;
+#  }
+#}
 
 
 =head1 _handle_directive()
@@ -478,11 +473,11 @@ sub _handle_directive {
     # RAE: Sequence regions are in the format sequence-region seqid start end
     # for these we want to store the seqid, start, and end. Then when we validate
     # we want to make sure that the features are within the seqid/start/end
-
+        
     $self->throw('Both start and end for sequence region should be defined')
       unless $arg[1] && $arg[2];
     my $fta = Bio::Annotation::OntologyTerm->new();
-    $fta->name( 'region');
+    $fta->name( 'region' );
 
     my $f = Bio::SeqFeature::Annotated->new();
     $f->seq_id( $arg[0] );
@@ -496,7 +491,9 @@ sub _handle_directive {
 
     #NOTE: is this the right thing to do -- treat this as a feature? -allenday
     #buffer it to be returned by next_feature()
-    $self->_buffer_feature($f);
+    #$self->_buffer_feature($f);
+    return $f;
+    
   }
 
   elsif($directive eq 'feature-ontology'){
