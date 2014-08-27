@@ -820,7 +820,7 @@ sub _handle_non_reserved_tag {
   return $feat;
 }
 
-=head1 organims
+=head2 organism
 
 Gets/sets the organims from the organism directive
 
