@@ -180,6 +180,8 @@ are not supported.
 
 See below for more detailed summaries.  The main methods are:
 
+=over 3
+
 =item next_feature
 
 Fetch the next feature from the stream.
@@ -188,13 +190,15 @@ Fetch the next feature from the stream.
 
 Write the specified feature(s) to the stream.
 
-=feature_factory
+=item feature_factory
 
 This gets/sets the specific Bio::Factory::FeatureFactoryI
 
 =back
 
 The following methods delegate to the inter
+
+=over 3
 
 =item feature_class
 
@@ -207,6 +211,8 @@ Boolean flag, ensures the returned features are typed
 =item unflatten_features
 
 Ensure the returned features are unflattened
+
+=back
 
 =head2 TIEHANDLE(), READLINE(), PRINT()
 
