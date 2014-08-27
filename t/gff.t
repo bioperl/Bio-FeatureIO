@@ -203,7 +203,7 @@ $fcount = 0;
 $scount = 0;
 
 ok( $io = Bio::FeatureIO->new(-file => test_input_file('directives.gff3'),
-							  -verbose => test_debug()));
+							  -verbose => -1));
 
 #read features
 while($f = $io->next_feature()){
