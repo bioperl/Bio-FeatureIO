@@ -1,6 +1,8 @@
 Revision history for Perl extension Bio::FeatureIO.
 
 {{$NEXT}}
+
+1.6.902   2014-08-30 01:00:25-05:00 America/Chicago
         - Release version that supercedes latest on CPAN
         - No code changes
 
