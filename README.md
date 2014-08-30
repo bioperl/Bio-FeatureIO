@@ -7,10 +7,12 @@ sequence formats, such as GFF3, GTF, and BED.
 
 To install this module type the following:
 
-   perl Build.PL
-   ./Build
-   ./Build test
-   ./Build install
+```
+perl Build.PL
+./Build
+./Build test
+./Build install
+```
 
 # Dependencies
 
