@@ -1,7 +1,6 @@
 Build.PL
 Changes
 dist.ini
-FeatureIO.komodoproject
 inc/Test/Builder.pm
 inc/Test/Builder/IO/Scalar.pm
 inc/Test/Builder/Module.pm
@@ -22,7 +21,7 @@ lib/Bio/FeatureIO/ptt.pm
 lib/Bio/FeatureIO/vecscreen_simple.pm
 lib/Bio/SeqFeature/Annotated.pm
 MANIFEST			This list of files
-README
+README.md
 t/bed.t
 t/data/1.bed
 t/data/directives.gff3
