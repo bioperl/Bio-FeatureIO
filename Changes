@@ -1,6 +1,8 @@
 Revision history for Perl extension Bio::FeatureIO.
 
 {{$NEXT}}
+
+1.6.903   2014-09-02 14:22:48-05:00 America/Chicago
    * Require Tree::DAG_Node
    * Remove bundled Test::More/Exception/Warn dists
      (rely on Bio::Root::Test, though this will be
