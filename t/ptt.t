@@ -3,7 +3,6 @@
 
 use strict;
 use warnings;
-use lib './inc';
 use Bio::Root::Test;
 use Bio::FeatureIO;
 
