@@ -1,6 +1,8 @@
 Revision history for Perl extension Bio::FeatureIO.
 
 {{$NEXT}}
+
+1.6.904   2014-09-02 15:23:07-05:00 America/Chicago
    * Fix bugtracker URL
 
 1.6.903   2014-09-02 14:22:48-05:00 America/Chicago
