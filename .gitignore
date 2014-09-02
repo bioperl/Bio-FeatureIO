@@ -17,4 +17,5 @@ t/LocalDB/SeqFeature_*.t
 blib*
 *.bak
 MYMETA.yml
+MYMETA.json
 *.komodoproject
