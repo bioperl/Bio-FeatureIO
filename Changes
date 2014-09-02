@@ -1,11 +1,13 @@
 Revision history for Perl extension Bio::FeatureIO.
 
 {{$NEXT}}
+   * Require Tree::DAG_Node
+   * Remove bundled Test::More distribution
 
 1.6.902   2014-08-30 01:00:25-05:00 America/Chicago
-        - Release version that supercedes latest on CPAN
-        - No code changes
+   * Release version that supercedes latest on CPAN
+   * No code changes
 
 1.6.0     2014-08-30 00:53:58-05:00 America/Chicago
-	- initial split off from BioPerl core 
+   * initial split off from BioPerl core 
 
