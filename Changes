@@ -2,7 +2,9 @@ Revision history for Perl extension Bio::FeatureIO.
 
 {{$NEXT}}
    * Require Tree::DAG_Node
-   * Remove bundled Test::More distribution
+   * Remove bundled Test::More/Exception/Warn dists
+     (rely on Bio::Root::Test, though this will be
+     switched to using Test::Most)
 
 1.6.902   2014-08-30 01:00:25-05:00 America/Chicago
    * Release version that supercedes latest on CPAN
