@@ -8,7 +8,6 @@ BEGIN {
     
     test_begin( 
 	       -requires_modules => [qw(URI::Escape Graph::Directed)],
-	       -requires_networking => 1
 	);
 	
 	use_ok('Bio::SeqFeature::Generic');
