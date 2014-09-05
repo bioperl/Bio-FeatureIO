@@ -1,6 +1,8 @@
 Revision history for Perl extension Bio::FeatureIO.
 
 {{$NEXT}}
+
+1.6.905   2014-09-05 12:34:22-05:00 America/Chicago
    * Minor testing fix: move Bio::SeqFeature::Annotated
      tests to release-only tests, since this requires
      networking parameter checks via Module::Build.
