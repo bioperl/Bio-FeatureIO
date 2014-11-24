@@ -1,5 +1,4 @@
 # -*-Perl-*- Test Harness script for Bioperl
-# $Id: FeatureIO.t 15112 2008-12-08 18:12:38Z sendu $
 
 use strict;
 use warnings;
@@ -48,6 +47,16 @@ while ($io->next_feature) {
 }
 
 is($ct, 6);
+
+ok($io = Bio::FeatureIO->new(-file => test_input_file('1.bed')));
+ok($f = $io->next_feature);
+
+is($f->start, 1);
+is($f->end, 10);
+
+# Check field values.
+is($f->display_name, "test-coordinates-1");
+is($f->seq_id, "chr1");
 
 done_testing();
 
