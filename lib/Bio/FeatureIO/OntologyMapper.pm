@@ -1,5 +1,14 @@
 package Bio::FeatureIO::OntologyMapper;
 
+use utf8;
+use strict;
+use warnings;
+
+# ABSTRACT: OntologyMapper
+# AUTHOR:   Chris Mungall <cjm@berkeleybop.org>
+# OWNER:    Chris Mungall
+# LICENSE:  Perl_5
+
 sub get_tagmap {
     return
     {

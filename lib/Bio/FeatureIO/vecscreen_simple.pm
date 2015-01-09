@@ -1,9 +1,19 @@
+package Bio::FeatureIO::vecscreen_simple;
+
+use utf8;
+use strict;
+use warnings;
+use base qw(Bio::FeatureIO);
+use Bio::SeqFeature::Generic;
+
+# ABSTRACT: read/write features from NCBI vecscreen -f 3 output
+# AUTHOR:   Robert Buels <rmb32@cornell.edu>
+# OWNER:    Robert Buels
+# LICENSE:  Perl_5
+
+# CONTRIBUTOR: based on ptt.pm by Torsten Seeman
+
 =pod
-
-=head1 NAME
-
-Bio::FeatureIO::vecscreen_simple - read/write features from NCBI vecscreen -f 3
-output
 
 =head1 SYNOPSIS
 
@@ -30,58 +40,8 @@ contamination using vecscreen.
 This module provides parsing for vecscreen '-f 3' output, described in
 the vecscreen documentation as 'Text list, no alignments'
 
-=head1 FEEDBACK
-
-=head2 Mailing Lists
-
-User feedback is an integral part of the evolution of this and other
-Bioperl modules. Send your comments and suggestions preferably to
-the Bioperl mailing list.  Your participation is much appreciated.
-
- bioperl-l@bioperl.org                  - General discussion
- http://bioperl.org/wiki/Mailing_lists  - About the mailing lists
-
-=head2 Support 
-
-Please direct usage questions or support issues to the mailing list:
-
-I<bioperl-l@bioperl.org>
-
-rather than to the module maintainer directly. Many experienced and 
-reponsive experts will be able look at the problem and quickly 
-address it. Please include a thorough description of the problem 
-with code and data examples if at all possible.
-
-=head2 Reporting Bugs
-
-Report bugs to the Bioperl bug tracking system to help us keep track
-of the bugs and their resolution. Bug reports can be submitted via
-the web:
-
- https://redmine.open-bio.org/projects/bioperl/
-
-=head1 AUTHOR - Robert Buels
-
-Email rmb32 AT cornell.edu
-
-=head1 CONTRIBUTORS
-
-Based on ptt.pm by Torsten Seeman
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
-
 =cut
 
-# Let the code begin...
-
-package Bio::FeatureIO::vecscreen_simple;
-
-use strict;
-use base qw(Bio::FeatureIO);
-use Bio::SeqFeature::Generic;
 
 =head2 _initialize
 
@@ -180,7 +140,4 @@ sub write_feature {
  shift->throw_not_implemented;
 }
 
-
-###
-1;#do not remove
-###
+1;

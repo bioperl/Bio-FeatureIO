@@ -1,13 +1,18 @@
 package Bio::FeatureIO::Handler::GenericFeatureHandler;
 
-use base qw(Bio::Root::Root Bio::HandlerBaseI);
-
-use 5.010;
+use utf8;
 use strict;
 use warnings;
+use 5.010;
+use base qw(Bio::Root::Root Bio::HandlerBaseI);
 use Bio::Factory::ObjectFactory;
 use Bio::SeqIO;
 use Data::Dumper;
+
+# ABSTRACT: One-line description of module's purpose
+# AUTHOR:   Chris Fields <cjfields@bioperl.org>
+# OWNER:    Chris Fields
+# LICENSE:  Perl_5
 
 my $ct = 0;
 my %GFF3_RESERVED_TAGS = map {$_ => $ct++ }
@@ -214,16 +219,6 @@ sub track_definition {}
 
 __END__
 
-=head1 NAME
-
-Bio::FeatureIO::Handler::GenericFeatureHandler.pm - <One-line description of module's
-purpose>
-
-=head1 VERSION
-
-This documentation refers to Bio::FeatureIO::Handler::GenericFeatureHandler.pm version
-Bio::Root::Root.
-
 =head1 SYNOPSIS
 
    use Bio::FeatureIO::Handler::GenericFeatureHandler.pm;
@@ -282,42 +277,6 @@ This may be due to name conflicts in the interface, or competition for
 system or program resources, or due to internal limitations of Perl
 (for example, many modules that use source code filters are mutually
 incompatible).
-
-=head1 BUGS AND LIMITATIONS
-
-There are no known bugs in this module.
-
-User feedback is an integral part of the evolution of this and other Biome and
-BioPerl modules. Send your comments and suggestions preferably to one of the
-BioPerl mailing lists. Your participation is much appreciated.
-
-  bioperl-l@bioperl.org                  - General discussion
-  http://bioperl.org/wiki/Mailing_lists  - About the mailing lists
-
-Patches are always welcome.
-
-=head2 Support 
-
-Please direct usage questions or support issues to the mailing list:
-
- bioperl-l@bioperl.org
-
-rather than to the module maintainer directly. Many experienced and reponsive
-experts will be able look at the problem and quickly address it. Please include
-a thorough description of the problem with code and data examples if at all
-possible.
-
-=head2 Reporting Bugs
-
-Preferrably, Biome bug reports should be reported to the GitHub Issues bug
-tracking system:
-
-  http://github.com/cjfields/biome/issues
-
-Bugs can also be reported using the BioPerl bug tracking system, submitted via
-the web:
-
-  http://bugzilla.open-bio.org/
 
 =head1 EXAMPLES
 
@@ -384,16 +343,3 @@ accompanied by working bug fixes. Publicly thanking those who have already done
 that in the past is a great way to remind people that patches are always
 welcome.
 
-=head1 AUTHOR
-
-Chris Fields  (cjfields at bioperl dot org)
-
-=head1 LICENCE AND COPYRIGHT
-
-Copyright (c) 2010 Chris Fields (cjfields at bioperl dot org). All rights reserved.
-
-followed by whatever licence you wish to release it under.
-For Perl code that is often just:
-
-This module is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself. See L<perlartistic>.

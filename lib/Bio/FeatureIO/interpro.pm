@@ -1,66 +1,8 @@
-
-=head1 NAME
-
-Bio::FeatureIO::interpro - read features from InterPro XML
-
-=head1 SYNOPSIS
-
-  my $in = Bio::FeatureIO(-format=>'interpro');
-  while (my $feat = $in->next_feature) {
-    # do something with the Bio::SeqFeatureI object
-  }
-
-=head1 DESCRIPTION
-
-See L<http://www.ebi.ac.uk/interpro/documentation.html>.
-
-=head1 FEEDBACK
-
-=head2 Mailing Lists
-
-User feedback is an integral part of the evolution of this and other
-Bioperl modules. Send your comments and suggestions preferably to
-the Bioperl mailing list.  Your participation is much appreciated.
-
-  bioperl-l@bioperl.org                  - General discussion
-  http://bioperl.org/wiki/Mailing_lists  - About the mailing lists
-
-=head2 Support 
-
-Please direct usage questions or support issues to the mailing list:
-
-I<bioperl-l@bioperl.org>
-
-rather than to the module maintainer directly. Many experienced and 
-reponsive experts will be able look at the problem and quickly 
-address it. Please include a thorough description of the problem 
-with code and data examples if at all possible.
-
-=head2 Reporting Bugs
-
-Report bugs to the Bioperl bug tracking system to help us keep track
-of the bugs and their resolution. Bug reports can be submitted via
-the web:
-
-  https://redmine.open-bio.org/projects/bioperl/
-
-=head1 AUTHOR - Allen Day
-
-Email allenday@ucla.edu
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
-
-=cut
-
-
-# Let the code begin...
-
 package Bio::FeatureIO::interpro;
 
+use utf8;
 use strict;
+use warnings;
 use base qw(Bio::FeatureIO);
 use Bio::SeqFeature::Annotated;
 
@@ -73,6 +15,25 @@ use Bio::Annotation::Target;
 use URI::Escape;
 use XML::DOM;
 use XML::DOM::XPath;
+
+# ABSTRACT: read features from InterPro XML
+# AUTHOR:   Allen Day <allenday@ucla.edu>
+# OWNER:    Allen Day
+# LICENSE:  Perl_5
+
+=head1 SYNOPSIS
+
+  my $in = Bio::FeatureIO(-format=>'interpro');
+  while (my $feat = $in->next_feature) {
+    # do something with the Bio::SeqFeatureI object
+  }
+
+=head1 DESCRIPTION
+
+See L<http://www.ebi.ac.uk/interpro/documentation.html>.
+
+
+=cut
 
 sub _initialize {
   my($self,%arg) = @_;

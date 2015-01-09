@@ -1,5 +1,6 @@
 package Bio::FeatureIO::gff;
 
+use utf8;
 use strict;
 use warnings;
 use 5.010;
@@ -9,12 +10,27 @@ use base qw(Bio::FeatureIO);
 # the better...
 
 # TODO TODO: Look at GAL (Barry Moore's library) as well
-
 use Bio::GFF3::LowLevel qw(
     gff3_format_feature
     gff3_escape
     gff3_unescape
 );
+
+
+# ABSTRACT: read/write GFF feature files
+# AUTHOR:   Chris Fields <cjfields@bioperl.org>
+# AUTHOR:   Robert Buels <rbuels@cpan.org>
+# OWNER:    Chris Fields
+# OWNER:    Robert Buels
+# LICENSE:  Perl_5
+
+## Refactored from the original work by:
+##
+## Allen Day, <allenday@ucla.edu>
+
+# CONTRIBUTOR: Steffen Grossmann <grossman@molgen.mpg.de>
+# CONTRIBUTOR: Scott Cain <scain@cpan.org>
+# CONTRIBUTOR: Rob Edwards <rob@salmonella.org>
 
 sub _initialize {
     my ($self, @args) = @_;
@@ -462,10 +478,6 @@ sub version {
 
 __END__
 
-=head1 NAME
-
-Bio::FeatureIO::gff - read/write GFF feature files
-
 =head1 SYNOPSIS
 
   my $feature; #get a Bio::SeqFeatureI somehow
@@ -535,51 +547,6 @@ Maybe something like:
  GFF 2             N       N
  GFF 2.5 (GTF)     N       Y
  GFF 3             Y       Y
-
-=head1 FEEDBACK
-
-=head2 Mailing Lists
-
-User feedback is an integral part of the evolution of this and other
-Bioperl modules. Send your comments and suggestions preferably to
-the Bioperl mailing list.  Your participation is much appreciated.
-
-  bioperl-l@bioperl.org                 - General discussion
-  http://bioperl.org/wiki/Mailing_list  - About the mailing lists
-
-=head2 Support 
-
-Please direct usage questions or support issues to the mailing list:
-
-I<bioperl-l@bioperl.org>
-
-rather than to the module maintainer directly. Many experienced and 
-reponsive experts will be able look at the problem and quickly 
-address it. Please include a thorough description of the problem 
-with code and data examples if at all possible.
-
-=head2 Reporting Bugs
-
-Report bugs to the Bioperl bug tracking system to help us keep track
-of the bugs and their resolution. Bug reports can be submitted via
-the web:
-
-  http://bugzilla.open-bio.org/
-
-=head1 AUTHORS
-
- Chris Fields, <cjfields at bioperl dot org>
- Robert Buels, <rbuels at cpan dot org>
-
-Refactored from the original work by:
-
- Allen Day, <allenday@ucla.edu>
-
-=head1 CONTRIBUTORS
-
- Steffen Grossmann, <grossman@molgen.mpg.de>
- Scott Cain, <scain@cpan.org>
- Rob Edwards <rob@salmonella.org>
 
 =head1 APPENDIX
 

@@ -1,8 +1,21 @@
+package Bio::FeatureIO::ptt;
+
+use utf8;
+use strict;
+use warnings;
+use 5.010;
+use base qw(Bio::FeatureIO);
+use Bio::SeqFeature::Generic;
+use Data::Dumper;
+
+# ABSTRACT: read/write features in PTT format
+# AUTHOR:   Torsten Seemann <torsten.seemann@infotech.monash.edu.au>
+# OWNER:    Torsten Seemann
+# LICENSE:  Perl_5
+
+# CONTRIBUTOR: based on bed.pm and gff.pm by Allen Day
+
 =pod
-
-=head1 NAME
-
-Bio::FeatureIO::ptt - read/write features in PTT format
 
 =head1 SYNOPSIS
 
@@ -65,60 +78,8 @@ Feature lines, nine columns, tab separated, "-" used for empty fields
 
 =back
 
-=head1 FEEDBACK
-
-=head2 Mailing Lists
-
-User feedback is an integral part of the evolution of this and other
-Bioperl modules. Send your comments and suggestions preferably to
-the Bioperl mailing list.  Your participation is much appreciated.
-
-  bioperl-l@bioperl.org                  - General discussion
-  http://bioperl.org/wiki/Mailing_lists  - About the mailing lists
-
-=head2 Support 
-
-Please direct usage questions or support issues to the mailing list:
-
-I<bioperl-l@bioperl.org>
-
-rather than to the module maintainer directly. Many experienced and 
-reponsive experts will be able look at the problem and quickly 
-address it. Please include a thorough description of the problem 
-with code and data examples if at all possible.
-
-=head2 Reporting Bugs
-
-Report bugs to the Bioperl bug tracking system to help us keep track
-of the bugs and their resolution. Bug reports can be submitted via
-the web:
-
-  https://redmine.open-bio.org/projects/bioperl/
-
-=head1 AUTHOR - Torsten Seemann
-
-Email torsten.seemann AT infotech.monash.edu.au
-
-=head1 CONTRIBUTORS
-
-Based on bed.pm and gff.pm by Allen Day.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
-
 =cut
 
-# Let the code begin...
-
-package Bio::FeatureIO::ptt;
-
-use 5.010;
-use strict;
-use base qw(Bio::FeatureIO);
-use Bio::SeqFeature::Generic;
-use Data::Dumper;
 
 # map tab-separated column number to field name
 #our %NAME_OF = (
