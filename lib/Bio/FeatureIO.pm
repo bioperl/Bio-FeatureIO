@@ -48,7 +48,7 @@ An I/O iterator subsystem for genomic sequence features.  This set of parsers
 can be used on many levels:
 
 1) Simple parsing: the next_dataset() method returns hash-refs containing
-both the data parsed and 
+both the data parsed and
 
 Bio::FeatureIO is a handler module for the formats in the FeatureIO set (eg,
 Bio::FeatureIO::GFF).
@@ -289,7 +289,7 @@ sub _initialize {
     $format ||= 'GFF3';
     $handler_args ||= {};
     (ref($handler_args) eq 'HASH') ||
-        $self->throw("-handler_args must be a hash reference");    
+        $self->throw("-handler_args must be a hash reference");
     $handler ||= Bio::FeatureIO::Handler::GenericFeatureHandler->new(
         -verbose => $self->verbose,
         -fh      => $self->_fh,
@@ -298,7 +298,7 @@ sub _initialize {
     $seq    && $self->seq( $seq);
 
     $self->_init_stream();
-    $self->handler($handler);        
+    $self->handler($handler);
 }
 
 =head2 newFh
@@ -516,4 +516,3 @@ sub PRINT {
 1;
 
 __END__
-

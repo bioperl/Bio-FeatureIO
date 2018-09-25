@@ -17,12 +17,12 @@ sub get_tagmap {
         name => 'rdfs:label',
         alias => 'oboInOwl:hasRelatedSynonym',
         Dbxref => 'rdfs:seeAlso',
-        
+
     };
 }
 
 sub get_typemap {
-    return 
+    return
     {
           'helitron' => 'SO:0000544',
           'RNApol_III_promoter_type_2_region' => 'SO:0000846',
@@ -1739,4 +1739,3 @@ sub get_typemap {
         };
 }
 1;
-

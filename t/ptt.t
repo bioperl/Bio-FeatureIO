@@ -13,7 +13,7 @@ my ($io, $f, $s, $fcount, $scount);
 $fcount = 0;
 
 my $ptt_in = Bio::FeatureIO->new(
-  -file => test_input_file('test.ptt'), 
+  -file => test_input_file('test.ptt'),
   -format => 'ptt',
 );
 ok($ptt_in);
@@ -31,7 +31,7 @@ while (my $f = $ptt_in->next_feature) {
         is( ($f->get_tag_values('Alias'))[0], 'LB002' );
         ok( ! $f->has_tag('code') );
         is( ($f->get_tag_values('cog'))[0],'COG0685E' );
-        is( ($f->get_tag_values('product'))[0], '5,10-methylenetetrahydrofolate reductase' );   
+        is( ($f->get_tag_values('product'))[0], '5,10-methylenetetrahydrofolate reductase' );
     }
 }
 is($fcount, 367, 'ptt file count');

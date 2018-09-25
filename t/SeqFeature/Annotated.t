@@ -3,10 +3,10 @@
 
 use strict;
 
-BEGIN { 
+BEGIN {
     use lib '.';
     use Bio::Root::Test;
-    
+
     test_begin(
         -tests => 42,
         -requires_modules => [qw(URI::Escape Graph::Directed)],
@@ -103,7 +103,7 @@ is $sfa3->get_Annotations('new')->value,1;
 
 is $sfa3->score(), 12;
 ok $sfa3->score(11);
-is $sfa3->score(), 11; 
+is $sfa3->score(), 11;
 $sfa3->score(0);
 is $sfa3->score(), 0;	# test that setting to 0 no longer is overriddent to set score to '.' (fixed in Bio::SeqFeature::Annotated version 1.3.7)
 

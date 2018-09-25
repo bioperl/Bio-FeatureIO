@@ -90,7 +90,7 @@ sub next_dataset {
     # Note: this simply allows for versions of escape/unescape functions TODO:
     # needs to be made more stable and specifically versioned (only GFF3 seems
     # to be supported)
-    
+
     state $unescape_func = {
         3 => \&gff3_unescape,
       }->{$self->version}
@@ -353,7 +353,7 @@ sub _gff3_lowlevel_hashref {
  Usage   : $obj->fasta_mode($newval)
  Function: Indicates whether or not the parser is currently processing the FASTA
            section of the GFF stream
- Example : 
+ Example :
  Returns : Value of fasta_mode (a scalar)
  Args    : None
 
@@ -391,7 +391,7 @@ sub seqio {
 
  Usage   :
  Function: ###FIXME
- Returns : 
+ Returns :
  Args    :
 
 =cut
@@ -518,9 +518,9 @@ Maybe something like:
         'VERSION'       => 3
     }
  };
- 
+
  # features
- 
+
  $VAR = {
     'TYPE'      => 'FEATURE',
     'DATA'      => {
@@ -530,7 +530,7 @@ Maybe something like:
         'START'         => 1,
         'END'           => 10000,
         'STRAND'        => -1,
-        'PHASE'         => '.', # can also be left out 
+        'PHASE'         => '.', # can also be left out
         'SCORE'         => '.',
         'ATTRIBUTES'    => {
             'name'      => ['BRCA1'],
@@ -538,7 +538,7 @@ Maybe something like:
         }
     }
  };
- 
+
  Currently implemented:
 
  version         read?   write?

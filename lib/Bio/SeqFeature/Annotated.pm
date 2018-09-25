@@ -101,7 +101,7 @@ The original idea for this class appears to lump all SeqFeatureI data
 (primary_tag, source_tag, etc) into AnnotationI objects into an
 Bio::Annotation::Collection. The type is then checked against SOFA.
 
-There have been several requests to have type checking be optionally run. 
+There have been several requests to have type checking be optionally run.
 
 =over
 
@@ -343,7 +343,7 @@ Bio::SeqFeatureI::spliced_seq
 
 sub new {
     my ( $caller, @args) = @_;
-    my ($self) = $caller->SUPER::new(@args); 
+    my ($self) = $caller->SUPER::new(@args);
 
     $self->_initialize(@args);
 
@@ -410,15 +410,15 @@ sub _initialize {
 
 sub from_feature {
     my ($self,$feat,%opts) = @_;
-  
+
     # should deal with any SeqFeatureI implementation (i.e. we don't want to
     # automatically force a OO-heavy implementation on all classes)
-    ref($feat) && ($feat->isa('Bio::SeqFeatureI')) 
+    ref($feat) && ($feat->isa('Bio::SeqFeatureI'))
       or $self->throw('invalid arguments to from_feature');
-  
+
     #TODO: add overrides in opts for these values, so people don't have to screw up their feature object
     #if they don't want to
-  
+
     ### set most of the data
     foreach my $fieldname (qw/ start end strand frame score location seq_id source_tag primary_tag/) {
       #no strict 'refs'; #using symbolic refs, yes, but using them for methods is allowed now
@@ -573,7 +573,7 @@ sub type {
     $self->remove_Annotations('type');
     $self->add_Annotation('type',$term);
   }
-  
+
   return $self->get_Annotations('type');
 }
 
@@ -604,7 +604,7 @@ sub source {
       $self->remove_Annotations('source');
       $self->add_Annotation('source', $term);
   }
-  
+
   unless ($self->get_Annotations('source')) {
     $self->source(Bio::Annotation::SimpleValue->new(-value => '.'));
   }
@@ -676,7 +676,7 @@ sub phase {
   }
 
   $self->phase('.') unless $self->get_Annotations('phase'); # make sure we always have something
-  
+
   return ($self->get_Annotations('phase'))[0]->value;
 }
 
@@ -711,7 +711,7 @@ sub frame {
   }
 
   $self->frame('.') unless $self->get_Annotations('frame'); # make sure we always have something
-  
+
   return ($self->get_Annotations('frame'))[0]->value;
 }
 
@@ -725,7 +725,7 @@ sub frame {
 
  Usage   :
  Function: $obj->add_Annotation() is a shortcut to $obj->annotation->add_Annotation
- Returns : 
+ Returns :
  Args    :
 
 =cut
@@ -739,7 +739,7 @@ sub add_Annotation {
 
  Usage   :
  Function: $obj->remove_Annotations() is a shortcut to $obj->annotation->remove_Annotations
- Returns : 
+ Returns :
  Args    :
 
 =cut
@@ -804,11 +804,11 @@ sub primary_tag {
         $newterm->term($soterm);
         $term = $newterm;
       }
-      
+
       $self->type($term);
     }
   }
-  
+
   my $t = $self->type() || return;
   return $t->name;
 }
@@ -1076,8 +1076,8 @@ sub annotation {
 =head2 location()
 
  Usage   : my $location = $seqfeature->location()
- Function: returns a location object suitable for identifying location 
-           of feature on sequence or parent feature  
+ Function: returns a location object suitable for identifying location
+           of feature on sequence or parent feature
  Returns : Bio::LocationI object
  Args    : [optional] Bio::LocationI object to set the value to.
 
@@ -1139,7 +1139,7 @@ sub each_target {
            accommodate for the given feature.
            May be called whenever any kind of subfeature is added to this
            feature. add_SeqFeature() already does this.
- Returns : 
+ Returns :
  Args    : A Bio::SeqFeatureI implementing object.
 
 =cut
@@ -1270,7 +1270,7 @@ sub get_tag_values {
     }
 
     my $slot  = $tag2text{ $tagclass{$tag} || $tagclass{__DEFAULT__} };
-    
+
     return map { $_->$slot } $self->annotation->get_Annotations($tag);
 }
 
@@ -1313,8 +1313,8 @@ sub get_all_tags {
 
  Usage   : See remove_Annotations().
  Function:
- Returns : 
- Args    : 
+ Returns :
+ Args    :
  Note    : Contrary to what the name suggests, this method removes
            all annotations corresponding to $tag, not just a
            single anntoation.

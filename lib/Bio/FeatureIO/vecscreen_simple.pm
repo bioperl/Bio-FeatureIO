@@ -17,14 +17,14 @@ use Bio::SeqFeature::Generic;
 
 =head1 SYNOPSIS
 
-    # read features 
+    # read features
     my $fin = Bio::FeatureIO->new(-file=>'vecscreen.out',
                                   -format=>'vecscreen_simple');
     my @vec_regions;
     while (my $f = $fin->next_feature) {
       push @vec_regions, $f;
     }
-    
+
     # write features NOT IMPLEMENTED
 
 =head1 DESCRIPTION
@@ -47,7 +47,7 @@ the vecscreen documentation as 'Text list, no alignments'
 
 Title   : _initialize
 Function: Reading? parses the header of the input
-          Writing? 
+          Writing?
 
 =cut
 

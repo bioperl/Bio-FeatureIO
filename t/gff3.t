@@ -135,7 +135,7 @@ while($f = $io->next_feature()){
         is($f->primary_id, 'A00469');
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, undef);
         is($f->start, 62467934);
         is($f->end, 62469545);
         is($f->strand, -1);
@@ -144,7 +144,7 @@ while($f = $io->next_feature()){
         is($f->primary_id, undef);
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, undef);
         is($f->start, 62469076);
         is($f->end, 62469236);
         is($f->strand, -1);
@@ -194,7 +194,7 @@ while($f = $io->next_feature()){
         is($f->primary_id, 'A00469');
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, undef);
         is($f->start, 62467934);
         is($f->end, 62469545);
         is($f->strand, -1);
@@ -203,7 +203,7 @@ while($f = $io->next_feature()){
         is($f->primary_id, undef);
         is($f->seq_id, 'chr17');
         is($f->source_tag, 'UCSC');
-        is($f->score, undef);        
+        is($f->score, undef);
         is($f->start, 62469076);
         is($f->end, 62469236);
         is($f->strand, -1);
@@ -294,25 +294,25 @@ if (@f) {
     is($types{'three_prime_UTR'}, 1);
     is($types{'CDS'}, 5);
     is($types{'five_prime_UTR'}, 1);
-    
+
     %types = ();
     $ct = 0;
     is($f[1]->primary_tag,'mRNA');
     for my $subf ($f[1]->get_SeqFeatures) {
         $types{$subf->primary_tag}++;
-        $ct++        
-    }    
+        $ct++
+    }
     is($ct, 5);
     is($types{'three_prime_UTR'}, 1);
     is($types{'CDS'}, 2);
     is($types{'five_prime_UTR'}, 2);
-    
+
     %types = ();
     $ct = 0;
     is($f[2]->primary_tag,'match');
     for my $subf ($f[2]->get_SeqFeatures) {
         $types{$subf->primary_tag}++;
-        $ct++        
+        $ct++
     }
     is($ct, 0);
 }
@@ -328,7 +328,7 @@ is($scount, 1);
 
 ################################################################################
 #
-# use FeatureIO::gff to read GFF3 where aggregated feature groups are denoted 
+# use FeatureIO::gff to read GFF3 where aggregated feature groups are denoted
 # using '###'.
 #
 # The advantage of using this is the method can be used iteratively w/o worrying
@@ -361,7 +361,7 @@ is($ct, 7);
 is($types{'three_prime_UTR'}, 1);
 is($types{'CDS'}, 5);
 is($types{'five_prime_UTR'}, 1);
-    
+
 $io->verbose(1);
 @f = $io->next_feature_group();
 is(@f, 1);
@@ -374,8 +374,8 @@ is_deeply( [ sort $f[0]->get_tag_values('Ontology_term') ], [qw[ GO:0005194 GO:0
 is( ( $f[0]->get_tag_values('Note') )[0], 'osteomodulin' );
 for my $subf ($f[0]->get_SeqFeatures) {
     $types{$subf->primary_tag}++;
-    $ct++        
-}    
+    $ct++
+}
 is($ct, 5);
 is($types{'three_prime_UTR'}, 1);
 is($types{'CDS'}, 2);
@@ -389,7 +389,7 @@ $ct = 0;
 is($f[0]->primary_tag,'match');
 for my $subf ($f[0]->get_SeqFeatures) {
     $types{$subf->primary_tag}++;
-    $ct++        
+    $ct++
 }
 is($ct, 0);
 

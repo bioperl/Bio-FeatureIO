@@ -38,7 +38,7 @@ for my $modifier ( sub {}, sub { $_[0]->remove_tag('Parent') if $_[0]->has_tag('
         $out->write_feature($_) for @f;
     }
     print $out_faldo;
-    
+
 
 }
 done_testing();

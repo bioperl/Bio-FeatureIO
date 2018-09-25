@@ -24,12 +24,12 @@ sub _initialize {
 
     $self->{_typemap} = Bio::FeatureIO::OntologyMapper->get_typemap();
     $self->{_prefixmap_written} = {};
-    
+
 
 }
 
 sub _prefixmap {
-    return 
+    return
       (rdf => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
        rdfs => 'http://www.w3.org/2000/01/rdf-schema#',
        xsd => 'http://www.w3.org/2001/XMLSchema#',
@@ -79,14 +79,14 @@ sub write_feature {
 
 sub _write_feature_with_parent {
     my($self,$f, $parent) = @_;
-    
+
     # type
     my ($id) = $f->get_tag_values('ID');
     my $uri = $self->_id_to_uri($id);
     $self->_write_triple($uri, 'rdf:type', $self->_so($f->primary_tag));
 
     my $strand =
-        $f->strand ? $f->strand == 1 ? 'ForwardStrandPosition' : 'NegativeStrandPosition' 
+        $f->strand ? $f->strand == 1 ? 'ForwardStrandPosition' : 'NegativeStrandPosition'
         : 'BothStrandsPosition';
     $strand = "faldo:$strand";
 
@@ -114,7 +114,7 @@ sub _write_feature_with_parent {
         $self->_write_triple($end_obj, 'faldo:position', _xsd( int=> $f->strand >= 0 ?  $f->end : $f->start ));
         $self->_write_triple($end_obj, 'faldo:reference', $reference);
     }
-        
+
     #source => $f->source_tag,
 
     if ($parent) {
@@ -132,15 +132,15 @@ sub _write_feature_with_parent {
         # Note: order info will be lost; in future we may want a metadata tag for ordered properties
         my @vals = $f->get_tag_values( $tag );
         foreach my $v (@vals) {
-            
+
             if ($tag eq 'Ontology_term') {
                 $v =~ s/^(\S+):/obo:$1_/;
                 # TODO - coordinate on model; avoid falling into OWL-Full
-                $self->_write_triple($uri, 
-                                     'uniprotcore:classifiedWith', 
+                $self->_write_triple($uri,
+                                     'uniprotcore:classifiedWith',
                                      $v);
                 next;
-                                     
+
             }
 
             my $v_concrete = $v;
@@ -163,7 +163,7 @@ sub _write_feature_with_parent {
     }
 
 
-    $self->_print("\n");    
+    $self->_print("\n");
 }
 
 
@@ -192,7 +192,7 @@ sub _so {
         else {
             $so_id =~ s/^SO:/obo:SO_/;
         }
-        
+
         return $so_id
     }
     else {
@@ -253,7 +253,7 @@ sub _uri {
 sub write_ttl_header {
     my ($self) = @_;
     my %pm = $self->_prefixmap;
-    
+
     foreach my $k (keys %pm) {
         $self->_write_prefix_declaration($k, $pm{$k});
     }
@@ -341,4 +341,3 @@ all entities.
 More broadly: try and standardize wider set of attributes used in GFF3, provide standard RDF vocab or OBO library mappings
 
 =cut
-

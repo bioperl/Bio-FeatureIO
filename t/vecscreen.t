@@ -103,13 +103,13 @@ use Bio::FeatureIO;
     while(my $feat = $vs_in->next_feature) {
       push @vs_features,$feat;
     }
-  
+
     #convert the array of feature objects to something that can more easily be checked with is_deeply
     @vs_features = map {
         my $f = $_;
         my $rec = { map {$_ => $f->$_()} qw/start end primary_tag seq_id/ };
     } @vs_features;
-  
+
     is_deeply(\@vs_features,\@expected_features,'vecscreen_simple gets the correct features');
 }
 

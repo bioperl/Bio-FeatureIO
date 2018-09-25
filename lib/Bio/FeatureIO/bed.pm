@@ -56,7 +56,7 @@ sub _initialize {
  Title   : use_score
  Usage   : $obj->use_score($newval)
  Function: should score be used to adjust feature color when rendering?  set to true if so.
- Example : 
+ Example :
  Returns : value of use_score (a scalar)
  Args    : on set, new value (a scalar or undef, optional)
 
@@ -74,7 +74,7 @@ sub use_score {
  Title   : name
  Usage   : $obj->name($newval)
  Function: name of BED track
- Example : 
+ Example :
  Returns : value of name (a scalar)
  Args    : on set, new value (a scalar or undef, optional)
 
@@ -92,7 +92,7 @@ sub name {
  Title   : description
  Usage   : $obj->description($newval)
  Function: description of BED track
- Example : 
+ Example :
  Returns : value of description (a scalar)
  Args    : on set, new value (a scalar or undef, optional)
 

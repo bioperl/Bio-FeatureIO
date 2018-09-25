@@ -19,7 +19,7 @@ use Data::Dumper;
 
 =head1 SYNOPSIS
 
- # read features 
+ # read features
  my $fin = Bio::FeatureIO->new(-file=>'genes.ptt', -format=>'ptt');
  my @cds;
  while (my $f = $fin->next_feature) {
@@ -34,8 +34,8 @@ use Data::Dumper;
 
 =head1 DESCRIPTION
 
-The PTT file format is a table of protein features. 
-It is used mainly by NCBI who produce PTT files for 
+The PTT file format is a table of protein features.
+It is used mainly by NCBI who produce PTT files for
 all their published genomes found in L<ftp://ftp.ncbi.nih.gov/genomes/>.
 It has the following format:
 
@@ -47,7 +47,7 @@ Description of sequence to which the features belong
  eg. "Leptospira interrogans chromosome II, complete sequence - 0..358943"
 
 It is usually equivalent to the DEFINITION line of a Genbank file,
-with the length of the sequence appended. It is unclear why "0" is 
+with the length of the sequence appended. It is unclear why "0" is
 used as a starting range, it should be "1".
 
 =item Line 2
@@ -99,7 +99,7 @@ Feature lines, nine columns, tab separated, "-" used for empty fields
 
  Title   : _initialize
  Function: Reading? parses the header of the input
-           Writing? 
+           Writing?
 
 =cut
 
@@ -130,8 +130,8 @@ Feature lines, nine columns, tab separated, "-" used for empty fields
  Title   : next_feature
  Usage   : $io->next_feature()
  Function: read the next feature from the PTT file
- Example : 
- Args    : 
+ Example :
+ Args    :
  Returns : Bio::SeqFeatureI object
 
 =cut
@@ -175,9 +175,9 @@ sub next_dataset {
  Title   : write_feature
  Usage   : $io->write_feature($feature)
  Function: write a Bio::SeqFeature object in PTT format with no header
- Example : 
+ Example :
  Args    : Bio::SeqFeature object
- Returns : 
+ Returns :
 
 =cut
 
@@ -188,7 +188,7 @@ sub write_feature {
   # Location  Strand  Length  PID Gene  Synonym Code  COG Product
   # 190..255  + 21  16763391  thrL  STM0001 - - thr operon leader peptide
 
-  $self->throw("Only Bio::SeqFeature::Generic or Bio::SeqFeature::Annotated objects are writeable") 
+  $self->throw("Only Bio::SeqFeature::Generic or Bio::SeqFeature::Annotated objects are writeable")
   unless ( $feat->isa('Bio::SeqFeature::Generic') || $feat->isa('Bio::SeqFeature::Annotated') );
 
   # Default
@@ -216,7 +216,7 @@ sub write_feature {
  Title   : description
  Usage   : $obj->description($newval)
  Function: set/get the PTT file description for/from line one
- Example : 
+ Example :
  Returns : value of description (a scalar)
  Args    : on set, new value (a scalar or undef, optional)
 
@@ -234,7 +234,7 @@ sub description {
  Title   : protein_count
  Usage   : $obj->protein_count($newval)
  Function: set/get the PTT protein count for/from line two
- Example : 
+ Example :
  Args    : on set, new value (a scalar or undef, optional)
  Returns : value of protein_count (a scalar)
 

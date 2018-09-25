@@ -13,7 +13,7 @@ use warnings;
 
 bp_translate_feature E<lt> cdna_cds.fa E<gt> protein.fa
 
-=head1 DESCRIPTION 
+=head1 DESCRIPTION
 
 The script will translate one fasta file (on stdin) to protein on stdout
 
@@ -31,7 +31,7 @@ GetOptions(
 my $oformat = 'faldo';
 
 # this implicity uses the <> file stream
-my $featurein = Bio::FeatureIO->new( -format => $format, -file => shift); 
+my $featurein = Bio::FeatureIO->new( -format => $format, -file => shift);
 my $featureout = Bio::FeatureIO->new( -format => $oformat, -file => ">-" );
 
 

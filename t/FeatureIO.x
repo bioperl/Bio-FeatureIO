@@ -1,15 +1,14 @@
 # -*-Perl-*- Test Harness script for Bioperl
-# $Id: FeatureIO.t 15112 2008-12-08 18:12:38Z sendu $
 
 use strict;
 
 BEGIN {
     use lib '.';
     use Bio::Root::Test;
-    
+
     test_begin(-tests => 35,
                -requires_module => 'Graph');
-    
+
     use_ok('Bio::FeatureIO');
 }
 
@@ -167,7 +166,7 @@ is($scount , 1);
 $fcount = 0;
 
 my $ptt_in = Bio::FeatureIO->new(
-  -file => test_input_file('test.ptt'), 
+  -file => test_input_file('test.ptt'),
   -format => 'ptt',
 );
 ok($ptt_in);

@@ -18,19 +18,19 @@ my $ct = 0;
 my %GFF3_RESERVED_TAGS = map {$_ => $ct++ }
     qw(ID Name Alias Parent Target Gap
     Derives_from Note Dbxref Ontology_term Index);
-    
+
 my %HANDLERS = (
     # GFF3-specific
     'directive'             => \&directives,
-    
+
     # BED-specific
     'track_definition'      => \&track_definition,
-    
+
     # generic
     'comment'               => \&comment,
     'feature'               => \&seqfeature,
     'sequence'              => \&sequence,
-    
+
     # defaults (none for now)
     #'default'               => \&default
 );
@@ -55,7 +55,7 @@ sub data_handler {
     my $method = (exists $HANDLERS{$nm}) ? ($HANDLERS{$nm}) :
                 (exists $HANDLERS{'_DEFAULT_'}) ? ($HANDLERS{'_DEFAULT_'}) :
                 undef;
-    
+
     if ($method && ref $method eq 'CODE') {
         return $self->$method($data);
     } else {
@@ -193,15 +193,15 @@ sub directives {
 
 sub sequence {
     my ($handler, $data) = @_;
-    
+
     # So, at this point we have to decide whether to indicate this is the start
     # of a sequence stream (i.e. grab the file handle and create a SeqIO), or
     # allow further sequence data to be passed in. We punt and do the easy thing
     # for now, but we should allow flexibility here, so maybe something
     # configurable?
-    
+
     # Note this relies on having knowledge of the specific place in the stream
-    
+
     my ($start, $len) = @{$data}{qw(START LENGTH)};
     my $fh = $handler->file_handle;
     $handler->throw("Handler doesn't have a set file handle") if !$fh;
@@ -342,4 +342,3 @@ your software. But what you'd much prefer them to send you are bug reports
 accompanied by working bug fixes. Publicly thanking those who have already done
 that in the past is a great way to remind people that patches are always
 welcome.
-
