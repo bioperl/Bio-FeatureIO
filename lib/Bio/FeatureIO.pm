@@ -6,7 +6,6 @@ use warnings;
 use base qw(Bio::Root::IO);
 use Scalar::Util qw(blessed);
 use Bio::FeatureIO::Handler::GenericFeatureHandler;
-use Config::Any;
 use Symbol;
 
 # ABSTRACT: BioPerl IO classes for creating a stream of sequence features
